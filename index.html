@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>리본</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
+
+  :root{
+    --bg:#FFF7F9;
+    --card:#FFFFFF;
+    --ribbon:#EC93AE;
+    --ribbon-deep:#D9718F;
+    --gold:#E5B978;
+    --text:#3A2C30;
+    --sub:#9C8489;
+    --line:#F5DEE6;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+
+  body{
+    font-family:'Noto Sans KR',sans-serif;
+    background:var(--card);
+    color:var(--text);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+  }
+
+  .app{
+    width:100%;
+    max-width:460px;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+  }
+
+  .ribbon-top{
+    height:6px;
+    background:linear-gradient(to right,#F7C7D6,var(--ribbon),var(--gold),var(--ribbon),#F7C7D6);
+    flex-shrink:0;
+  }
+
+  .scroll{
+    flex:1;
+    overflow-y:auto;
+    padding:0 30px 40px;
+    position:relative;
+    background:
+      radial-gradient(circle at 15% 8%, rgba(236,147,174,0.10), transparent 40%),
+      radial-gradient(circle at 88% 22%, rgba(229,185,120,0.09), transparent 38%),
+      var(--card);
+  }
+
+  .wm{ position:absolute; font-size:120px; opacity:.045; pointer-events:none; user-select:none; }
+  .wm1{ top:40px; right:-20px; transform:rotate(15deg); }
+  .wm2{ bottom:60px; left:-30px; transform:rotate(-20deg); }
+
+  .logo-area{ text-align:center; padding:46px 0 30px; position:relative; z-index:1; }
+  .logo-mark{ font-size:44px; margin-bottom:12px; display:block; }
+  .logo-name{ font-family:'Gowun Batang',serif; font-size:27px; font-weight:700; letter-spacing:4px; }
+  .logo-line{
+    width:60px; height:2px; margin:12px auto 10px; border-radius:2px;
+    background:linear-gradient(to right,transparent,var(--ribbon),var(--gold),var(--ribbon),transparent);
+  }
+  .logo-sub{ font-size:12px; color:var(--sub); letter-spacing:1.5px; }
+
+  .field{ margin-bottom:14px; position:relative; z-index:1; }
+  .label{ font-size:11.5px; color:var(--sub); margin-bottom:6px; display:block; padding-left:4px; }
+  .input{
+    width:100%;
+    border:1.5px solid var(--line);
+    background:#FFFAFC;
+    border-radius:14px;
+    padding:14px 16px;
+    font-family:inherit;
+    font-size:16px;
+    color:var(--text);
+    outline:none;
+    transition:.15s;
+  }
+  .input::placeholder{ color:#D9BFC7; }
+  .input:focus{ border-color:var(--ribbon); background:#fff; box-shadow:0 0 0 3px rgba(236,147,174,0.12); }
+  .input.ok{ border-color:#A8D5B5; }
+  .input.err{ border-color:#E89898; }
+
+  .msg{ font-size:11px; margin-top:5px; padding-left:4px; display:none; }
+  .msg.show{ display:block; }
+  .msg.good{ color:#5F9E74; }
+  .msg.bad{ color:#C96B6B; }
+
+  .strength{ display:flex; gap:4px; margin-top:7px; }
+  .strength i{ flex:1; height:3px; border-radius:3px; background:var(--line); transition:.2s; }
+  .strength.s1 i:nth-child(1){ background:#E89898; }
+  .strength.s2 i:nth-child(-n+2){ background:var(--gold); }
+  .strength.s3 i{ background:#A8D5B5; }
+
+  .primary{
+    width:100%;
+    font-family:inherit;
+    font-size:15px; font-weight:700;
+    color:#fff; border:none;
+    padding:16px;
+    border-radius:999px;
+    background:linear-gradient(180deg,var(--ribbon),var(--ribbon-deep));
+    box-shadow:0 6px 16px rgba(217,113,143,0.35);
+    cursor:pointer;
+    margin-top:8px;
+    position:relative; z-index:1;
+  }
+  .primary:active{ transform:translateY(1px); }
+  .primary:disabled{ opacity:.55; }
+
+  .row-sub{ display:flex; justify-content:flex-end; margin-top:16px; position:relative; z-index:1; }
+  .link{
+    font-size:12px; color:var(--sub);
+    background:none; border:none; font-family:inherit;
+    cursor:pointer; text-decoration:underline; text-underline-offset:3px;
+  }
+
+  .bottom-switch{ text-align:center; margin-top:26px; font-size:12.5px; color:var(--sub); position:relative; z-index:1; }
+  .bottom-switch button{
+    font-family:inherit; font-size:12.5px; font-weight:700;
+    color:var(--ribbon-deep); background:none; border:none; cursor:pointer; margin-left:4px;
+  }
+
+  .back-row{ display:flex; align-items:center; gap:10px; padding:18px 0 6px; position:relative; z-index:1; }
+  .back{ font-size:18px; color:var(--ribbon-deep); background:none; border:none; cursor:pointer; }
+  .page-t{ font-family:'Gowun Batang',serif; font-size:19px; letter-spacing:2px; }
+  .page-desc{ font-size:12.5px; color:var(--sub); line-height:1.7; margin:6px 0 22px; position:relative; z-index:1; }
+
+  .terms{
+    margin-top:18px; padding:14px 15px;
+    background:#FFFAFC; border:1px solid var(--line); border-radius:14px;
+    position:relative; z-index:1;
+  }
+  .term-row{ display:flex; align-items:center; gap:8px; padding:7px 0; font-size:12px; cursor:pointer; }
+  .term-row.all{ font-weight:700; font-size:12.5px; padding-bottom:10px; margin-bottom:4px; border-bottom:1px dashed var(--line); }
+  .term-row .opt{ color:var(--sub); font-size:11px; margin-left:2px; }
+  .box{
+    width:18px; height:18px; border-radius:6px;
+    border:1.5px solid var(--line); background:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-size:10px; color:#fff; flex-shrink:0;
+  }
+  .box.on{ background:linear-gradient(180deg,var(--ribbon),var(--ribbon-deep)); border-color:transparent; }
+
+  .view-page{ display:none; }
+  .view-page.on{ display:block; }
+
+  /* 토스트 */
+  .toast{
+    position:fixed;
+    left:50%; bottom:34px;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--text); color:#fff;
+    font-size:13px;
+    padding:13px 20px;
+    border-radius:999px;
+    box-shadow:0 8px 24px rgba(0,0,0,.2);
+    opacity:0; pointer-events:none;
+    transition:.25s;
+    z-index:99;
+    max-width:88vw;
+    text-align:center;
+    line-height:1.5;
+  }
+  .toast.on{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast.bad{ background:#C96B6B; }
+  .toast.good{ background:#5F9E74; }
+
+  /* 로그인 완료 화면 */
+  .done{ text-align:center; padding:80px 20px; position:relative; z-index:1; }
+  .done .e{ font-size:52px; display:block; margin-bottom:18px; }
+  .done h2{ font-family:'Gowun Batang',serif; font-size:21px; letter-spacing:1.5px; margin-bottom:10px; }
+  .done p{ font-size:13px; color:var(--sub); line-height:1.9; }
+  .done .card{
+    margin:26px auto 0;
+    max-width:300px;
+    background:linear-gradient(145deg,#FFF3F7,#FDE9F0);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:20px;
+  }
+  .done .card b{ font-size:15px; }
+  .done .card span{ display:block; font-size:11.5px; color:var(--sub); margin-top:4px; }
+  .ghost{
+    margin-top:22px;
+    font-family:inherit; font-size:13px; font-weight:700;
+    color:var(--ribbon-deep);
+    background:#fff; border:1.5px solid var(--ribbon);
+    padding:13px 26px; border-radius:999px; cursor:pointer;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="ribbon-top"></div>
+
+  <div class="scroll">
+    <div class="wm wm1">🎀</div>
+    <div class="wm wm2">🎀</div>
+
+    <!-- ===== 로그인 ===== -->
+    <div class="view-page on" id="loginView">
+      <div class="logo-area">
+        <span class="logo-mark">🎀</span>
+        <div class="logo-name">리 본</div>
+        <div class="logo-line"></div>
+        <div class="logo-sub">취향으로 이어지는 곳</div>
+      </div>
+
+      <div class="field">
+        <label class="label">이메일</label>
+        <input class="input" type="email" id="li_email" placeholder="ribbon@example.com" autocomplete="email">
+      </div>
+
+      <div class="field">
+        <label class="label">비밀번호</label>
+        <input class="input" type="password" id="li_pw" placeholder="비밀번호를 입력해주세요" autocomplete="current-password">
+      </div>
+
+      <button class="primary" id="loginBtn">로그인</button>
+
+      <div class="row-sub">
+        <button class="link" id="resetBtn">비밀번호를 잊으셨나요?</button>
+      </div>
+
+      <div class="bottom-switch">
+        아직 계정이 없으신가요?
+        <button id="toSignup">가입하기</button>
+      </div>
+    </div>
+
+    <!-- ===== 회원가입 ===== -->
+    <div class="view-page" id="signupView">
+      <div class="back-row">
+        <button class="back" id="toLogin1">←</button>
+        <span class="page-t">회원가입</span>
+      </div>
+      <p class="page-desc">리본에 오신 걸 환영해요 🎀<br>닉네임은 나중에 언제든 바꿀 수 있어요.</p>
+
+      <div class="field">
+        <label class="label">이메일</label>
+        <input class="input" type="email" id="su_email" placeholder="ribbon@example.com" autocomplete="email">
+      </div>
+
+      <div class="field">
+        <label class="label">닉네임</label>
+        <input class="input" id="su_nick" placeholder="2~12자로 지어주세요" maxlength="12">
+        <div class="msg" id="nickMsg"></div>
+      </div>
+
+      <div class="field">
+        <label class="label">비밀번호</label>
+        <input class="input" type="password" id="su_pw" placeholder="8자 이상, 영문+숫자" autocomplete="new-password">
+        <div class="strength" id="st"><i></i><i></i><i></i></div>
+        <div class="msg bad" id="pwMsg">8자 이상 입력해주세요</div>
+      </div>
+
+      <div class="field">
+        <label class="label">비밀번호 확인</label>
+        <input class="input" type="password" id="su_pw2" placeholder="한 번 더 입력해주세요" autocomplete="new-password">
+        <div class="msg" id="pw2Msg"></div>
+      </div>
+
+      <div class="terms">
+        <div class="term-row all" id="termAll"><span class="box">✓</span><span>전체 동의</span></div>
+        <div class="term-row t1"><span class="box">✓</span><span>이용약관 동의</span><span class="opt">(필수)</span></div>
+        <div class="term-row t1"><span class="box">✓</span><span>개인정보 처리방침 동의</span><span class="opt">(필수)</span></div>
+        <div class="term-row t1"><span class="box">✓</span><span>만 14세 이상입니다</span><span class="opt">(필수)</span></div>
+        <div class="term-row t1"><span class="box">✓</span><span>마케팅 알림 수신</span><span class="opt">(선택)</span></div>
+      </div>
+
+      <button class="primary" id="signupBtn">가입하고 시작하기</button>
+
+      <div class="bottom-switch">
+        이미 계정이 있으신가요?
+        <button id="toLogin2">로그인</button>
+      </div>
+    </div>
+
+    <!-- ===== 로그인 완료 ===== -->
+    <div class="view-page" id="doneView">
+      <div class="done">
+        <span class="e">🎀</span>
+        <h2>어서오세요!</h2>
+        <p>로그인에 성공했어요.<br>여기부터는 다음 단계에서 만들 거예요.</p>
+        <div class="card">
+          <b id="doneNick">-</b>
+          <span id="doneHandle">-</span>
+          <span id="doneEmail">-</span>
+        </div>
+        <button class="ghost" id="logoutBtn">로그아웃</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  function go(v){
+    document.querySelectorAll('.view-page').forEach(p => p.classList.remove('on'));
+    document.getElementById(v + 'View').classList.add('on');
+    document.querySelector('.scroll').scrollTop = 0;
+  }
+  document.getElementById('toSignup').addEventListener('click', () => go('signup'));
+  document.getElementById('toLogin1').addEventListener('click', () => go('login'));
+  document.getElementById('toLogin2').addEventListener('click', () => go('login'));
+</script>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const SUPABASE_URL = 'https://moljurikrtftxbexptrq.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_v4KEg3UdCNaypL_tTqrx1w_eClfbgUX';
+
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* ---------- 유틸 ---------- */
+const $ = id => document.getElementById(id);
+
+function toast(text, type){
+  const t = $('toast');
+  t.textContent = text;
+  t.className = 'toast on ' + (type || '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.className = 'toast ' + (type || ''), 3200);
+}
+
+
+
+/* 흔한 에러 메시지 한글로 */
+function ko(msg){
+  const m = (msg || '').toLowerCase();
+  if(m.includes('invalid login')) return '이메일이나 비밀번호가 맞지 않아요';
+  if(m.includes('already registered') || m.includes('already been registered')) return '이미 가입된 이메일이에요';
+  if(m.includes('email not confirmed')) return '메일함에서 인증을 먼저 완료해주세요';
+  if(m.includes('duplicate key') && m.includes('handle')) return '이미 사용 중인 닉네임이에요';
+  if(m.includes('password')) return '비밀번호는 8자 이상이어야 해요';
+  if(m.includes('invalid email') || m.includes('valid email')) return '이메일 형식을 확인해주세요';
+  if(m.includes('rate limit') || m.includes('too many')) return '잠시 후 다시 시도해주세요';
+  return msg || '문제가 생겼어요. 다시 시도해주세요';
+}
+
+/* 닉네임 → 핸들 */
+function makeHandle(nick){
+  const base = nick.toLowerCase().replace(/[^a-z0-9가-힣]/g, '');
+  const rand = Math.random().toString(36).slice(2, 6);
+  return (base ? base.slice(0, 8) : 'ribbon') + '_' + rand;
+}
+
+/* ---------- 회원가입: 실시간 체크 ---------- */
+$('su_nick').addEventListener('input', () => {
+  const v = $('su_nick').value.trim();
+  const el = $('su_nick'), m = $('nickMsg');
+  if(!v){ el.className = 'input'; m.className = 'msg'; return; }
+  if(v.length < 2){
+    el.className = 'input err';
+    m.className = 'msg bad show'; m.textContent = '2자 이상 입력해주세요';
+  } else {
+    el.className = 'input ok';
+    m.className = 'msg good show'; m.textContent = '좋은 닉네임이에요!';
+  }
+});
+
+$('su_pw').addEventListener('input', () => {
+  const v = $('su_pw').value;
+  let s = 0;
+  if(v.length >= 8) s++;
+  if(/[0-9]/.test(v) && /[a-zA-Z]/.test(v)) s++;
+  if(/[^a-zA-Z0-9]/.test(v) && v.length >= 10) s++;
+  $('st').className = 'strength s' + s;
+  $('pwMsg').classList.toggle('show', v.length > 0 && v.length < 8);
+  matchPw();
+});
+
+$('su_pw2').addEventListener('input', matchPw);
+
+function matchPw(){
+  const a = $('su_pw').value, b = $('su_pw2').value;
+  const el = $('su_pw2'), m = $('pw2Msg');
+  if(!b){ el.className = 'input'; m.className = 'msg'; return; }
+  if(a === b){
+    el.className = 'input ok';
+    m.className = 'msg good show'; m.textContent = '비밀번호가 일치해요';
+  } else {
+    el.className = 'input err';
+    m.className = 'msg bad show'; m.textContent = '비밀번호가 달라요';
+  }
+}
+
+/* ---------- 약관 ---------- */
+$('termAll').addEventListener('click', () => {
+  const on = !$('termAll').querySelector('.box').classList.contains('on');
+  document.querySelectorAll('.terms .box').forEach(b => b.classList.toggle('on', on));
+});
+document.querySelectorAll('.term-row.t1').forEach(row => {
+  row.addEventListener('click', () => {
+    row.querySelector('.box').classList.toggle('on');
+    const rows = [...document.querySelectorAll('.term-row.t1 .box')];
+    $('termAll').querySelector('.box').classList.toggle('on', rows.every(b => b.classList.contains('on')));
+  });
+});
+
+/* ---------- 회원가입 ---------- */
+$('signupBtn').addEventListener('click', async () => {
+  const email = $('su_email').value.trim();
+  const nick  = $('su_nick').value.trim();
+  const pw    = $('su_pw').value;
+  const pw2   = $('su_pw2').value;
+
+  if(!email) return toast('이메일을 입력해주세요', 'bad');
+  if(nick.length < 2) return toast('닉네임을 2자 이상 입력해주세요', 'bad');
+  if(pw.length < 8) return toast('비밀번호는 8자 이상이어야 해요', 'bad');
+  if(pw !== pw2) return toast('비밀번호가 일치하지 않아요', 'bad');
+
+  const required = [...document.querySelectorAll('.term-row.t1')].slice(0, 3);
+  if(!required.every(r => r.querySelector('.box').classList.contains('on')))
+    return toast('필수 약관에 동의해주세요', 'bad');
+
+  const btn = $('signupBtn');
+  btn.disabled = true; btn.textContent = '가입하는 중...';
+
+  const { data, error } = await db.auth.signUp({
+    email,
+    password: pw,
+    options: { data: { nickname: nick, handle: makeHandle(nick) } }
+  });
+
+  btn.disabled = false; btn.textContent = '가입하고 시작하기';
+
+  if(error) return toast(ko(error.message), 'bad');
+
+  if(data.session){
+    toast('가입 완료! 어서오세요 🎀', 'good');
+    showDone(data.user);
+  } else {
+    toast('인증 메일을 보냈어요. 메일함을 확인해주세요 🎀', 'good');
+    setTimeout(() => go('login'), 1200);
+  }
+});
+
+/* ---------- 로그인 ---------- */
+$('loginBtn').addEventListener('click', async () => {
+  const email = $('li_email').value.trim();
+  const pw = $('li_pw').value;
+  if(!email || !pw) return toast('이메일과 비밀번호를 입력해주세요', 'bad');
+
+  const btn = $('loginBtn');
+  btn.disabled = true; btn.textContent = '로그인 중...';
+
+  const { data, error } = await db.auth.signInWithPassword({ email, password: pw });
+
+  btn.disabled = false; btn.textContent = '로그인';
+
+  if(error) return toast(ko(error.message), 'bad');
+  toast('어서오세요 🎀', 'good');
+  showDone(data.user);
+});
+
+/* 엔터키로 로그인 */
+$('li_pw').addEventListener('keydown', e => { if(e.key === 'Enter') $('loginBtn').click(); });
+
+/* ---------- 비밀번호 재설정 ---------- */
+$('resetBtn').addEventListener('click', async () => {
+  const email = $('li_email').value.trim();
+  if(!email) return toast('이메일을 먼저 입력해주세요', 'bad');
+  const { error } = await db.auth.resetPasswordForEmail(email);
+  if(error) return toast(ko(error.message), 'bad');
+  toast('비밀번호 재설정 메일을 보냈어요', 'good');
+});
+
+/* ---------- 로그아웃 ---------- */
+$('logoutBtn').addEventListener('click', async () => {
+  await db.auth.signOut();
+  $('li_email').value = ''; $('li_pw').value = '';
+  toast('로그아웃했어요');
+  go('login');
+});
+
+/* ---------- 로그인 후 화면 ---------- */
+async function showDone(user){
+  go('done');
+  $('doneEmail').textContent = user.email;
+  const { data } = await db.from('profiles').select('nickname, handle').eq('id', user.id).single();
+  if(data){
+    $('doneNick').textContent = data.nickname;
+    $('doneHandle').textContent = '@' + data.handle;
+  }
+}
+
+/* ---------- 시작할 때 로그인 상태 확인 ---------- */
+(async () => {
+  const { data } = await db.auth.getSession();
+  if(data.session) showDone(data.session.user);
+})();
+</script>
+</body>
+</html>
