@@ -644,6 +644,31 @@
   }
   textarea.input{ resize:none; min-height:80px; line-height:1.7; }
 
+  /* 아바타 사진 */
+  .avatar img, .locket-body img{
+    width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;
+  }
+  .locket-body img{ position:relative; z-index:1; }
+
+  /* 프로필 사진 고르기 */
+  .av-edit{ display:flex; align-items:center; gap:14px; margin-bottom:6px; }
+  .av-preview{
+    width:76px; height:76px; border-radius:50%; flex-shrink:0;
+    background:linear-gradient(150deg,#FCD9E4,#F3B3C6 60%,#EBA3BE);
+    border:2.5px solid var(--gold);
+    display:flex; align-items:center; justify-content:center;
+    font-size:32px; overflow:hidden; position:relative;
+  }
+  .av-preview img{ width:100%; height:100%; object-fit:cover; }
+  .av-side{ flex:1; display:flex; flex-direction:column; gap:7px; }
+  .av-side button{
+    font-family:inherit; font-size:12px; font-weight:700;
+    padding:10px 0; border-radius:999px; cursor:pointer;
+    border:1.5px solid var(--ribbon); background:#fff; color:var(--ribbon-deep);
+  }
+  .av-side button.gray{ border-color:var(--line); color:var(--sub); }
+  .av-note{ font-size:11px; color:var(--sub); margin:8px 0 4px; }
+
   /* ============ 내 정보 ============ */
   .me-wrap{ padding:30px 20px; text-align:center; }
   .me-av{
@@ -903,7 +928,16 @@
       <div class="sheet-t">프로필 수정</div>
 
       <div class="field">
-        <label class="label">아바타</label>
+        <label class="label">프로필 사진</label>
+        <div class="av-edit">
+          <div class="av-preview" id="avPreview">🌷</div>
+          <div class="av-side">
+            <button id="avPick">사진 고르기</button>
+            <button class="gray" id="avClear">사진 지우기</button>
+          </div>
+        </div>
+        <input type="file" id="avFile" accept="image/*" hidden>
+        <div class="av-note">사진이 없으면 아래 이모지가 보여요</div>
         <div class="emoji-pick" id="emojiPick"></div>
       </div>
 
@@ -1196,7 +1230,7 @@ async function loadFeed(){
   const targets = boardFilter ? [boardFilter] : zoneBoards;
 
   let q = db.from('posts')
-    .select('*, author:profiles!posts_author_id_fkey(nickname, handle, avatar_emoji), boards(label, zone), post_media(url, kind, sort_order)')
+    .select('*, author:profiles!posts_author_id_fkey(nickname, handle, avatar_emoji, avatar_url), boards(label, zone), post_media(url, kind, sort_order)')
     .in('board_id', targets)
     .order('created_at', { ascending:false })
     .limit(50);
@@ -1219,6 +1253,11 @@ async function loadFeed(){
 
   feed.innerHTML = '';
   data.forEach(p => feed.appendChild(postCard(p)));
+}
+
+function avatarInner(u){
+  if(u && u.avatar_url) return `<img src="${esc(u.avatar_url)}" alt="">`;
+  return esc((u && u.avatar_emoji) || '🌷');
 }
 
 function mediaHtml(list){
@@ -1247,7 +1286,7 @@ function postCard(p){
 
   el.innerHTML = `
     <div class="p-head">
-      <div class="avatar">${esc(p.author?.avatar_emoji || '🌷')}</div>
+      <div class="avatar">${avatarInner(p.author)}</div>
       <div>
         <div class="p-name">${esc(p.author?.nickname || '알 수 없음')}</div>
         <div class="p-meta">${esc(p.boards?.label || '')} · ${timeAgo(p.created_at)}</div>
@@ -1498,7 +1537,7 @@ async function openDetail(postId){
   cancelReply();
 
   const { data: p, error } = await db.from('posts')
-    .select('*, author:profiles!posts_author_id_fkey(nickname, handle, avatar_emoji), boards(label, zone), post_media(url, kind, sort_order)')
+    .select('*, author:profiles!posts_author_id_fkey(nickname, handle, avatar_emoji, avatar_url), boards(label, zone), post_media(url, kind, sort_order)')
     .eq('id', postId).single();
 
   if(error){ $('dBody').innerHTML = '<div class="loading">' + esc(ko(error.message)) + '</div>'; return; }
@@ -1516,7 +1555,7 @@ async function openDetail(postId){
     <span class="d-tag${isInfo ? ' g' : ''}">${esc(p.boards?.label || '')}</span>
     <h1 class="d-ptitle">${esc(p.title)}</h1>
     <div class="d-author">
-      <div class="avatar">${esc(p.author?.avatar_emoji || '🌷')}</div>
+      <div class="avatar">${avatarInner(p.author)}</div>
       <div>
         <div class="d-aname">${esc(p.author?.nickname || '알 수 없음')}</div>
         <div class="d-atime">${timeAgo(p.created_at)}</div>
@@ -1592,7 +1631,7 @@ async function loadComments(postId){
   box.innerHTML = '<div class="loading">불러오는 중...</div>';
 
   const { data, error } = await db.from('comments')
-    .select('*, author:profiles!comments_author_id_fkey(nickname, avatar_emoji)')
+    .select('*, author:profiles!comments_author_id_fkey(nickname, avatar_emoji, avatar_url)')
     .eq('post_id', postId)
     .order('created_at', { ascending:true });
 
@@ -1630,7 +1669,7 @@ function commentNode(c, isReply){
   const isAuthor = curPost && c.author_id === curPost.author_id;
 
   el.innerHTML = `
-    <div class="avatar ${isReply ? 'xs' : 'sm'}">${esc(c.author?.avatar_emoji || '🌷')}</div>
+    <div class="avatar ${isReply ? 'xs' : 'sm'}">${avatarInner(c.author)}</div>
     <div class="c-main">
       <div class="c-top">
         <span class="c-name">${esc(c.author?.nickname || '알 수 없음')}</span>
@@ -1754,7 +1793,7 @@ async function openProfile(userId){
 
   const mine = me && u.id === me.id;
   $('pfHeadName').textContent = u.nickname;
-  $('pfAvatar').textContent = u.avatar_emoji || '🌷';
+  $('pfAvatar').innerHTML = avatarInner(u);
   $('pfName').textContent = u.nickname;
   $('pfHandle').textContent = '@' + u.handle;
   $('pfBio').textContent = u.bio || (mine ? '아직 소개가 없어요. 프로필 수정에서 추가해보세요!' : '');
@@ -1822,7 +1861,7 @@ async function loadProfileTab(){
 
   const zoneBoards = boards.filter(b => b.zone === pfTab).map(b => b.id);
   const { data, error } = await db.from('posts')
-    .select('*, author:profiles!posts_author_id_fkey(nickname, handle, avatar_emoji), boards(label, zone), post_media(url, kind, sort_order)')
+    .select('*, author:profiles!posts_author_id_fkey(nickname, handle, avatar_emoji, avatar_url), boards(label, zone), post_media(url, kind, sort_order)')
     .eq('author_id', pfUser.id)
     .in('board_id', zoneBoards)
     .order('created_at', { ascending:false });
@@ -1847,7 +1886,38 @@ $('pfBack').addEventListener('click', () => { screen('home'); loadFeed(); });
 /* ---------- 프로필 수정 ---------- */
 const EMOJIS = ['🌷','🎀','🐰','🍰','☁️','🌸','✏️','🎨','💗','⭐','🌙','🧸','🍓','🕊️','🫧','🪞'];
 
+let avNewFile = null;    // 새로 고른 파일
+let avRemoved = false;   // 사진 지우기 눌렀는지
+
+function drawAvPreview(){
+  const box = $('avPreview');
+  if(avNewFile){
+    box.innerHTML = `<img src="${URL.createObjectURL(avNewFile)}" alt="">`;
+  } else if(!avRemoved && me.avatar_url){
+    box.innerHTML = `<img src="${esc(me.avatar_url)}" alt="">`;
+  } else {
+    const on = $('emojiPick').querySelector('button.on');
+    box.textContent = on ? on.textContent : (me.avatar_emoji || '🌷');
+  }
+}
+
+$('avPick').addEventListener('click', () => $('avFile').click());
+$('avFile').addEventListener('change', e => {
+  const f = e.target.files[0];
+  e.target.value = '';
+  if(!f) return;
+  if(f.size > 10 * 1024 * 1024) return toast('프로필 사진은 10MB 이하만 가능해요', 'bad');
+  avNewFile = f; avRemoved = false;
+  drawAvPreview();
+});
+$('avClear').addEventListener('click', () => {
+  avNewFile = null; avRemoved = true;
+  drawAvPreview();
+  toast('저장하면 이모지로 바뀌어요');
+});
+
 function openEdit(){
+  avNewFile = null; avRemoved = false;
   const pick = $('emojiPick');
   pick.innerHTML = '';
   EMOJIS.forEach(e => {
@@ -1857,11 +1927,13 @@ function openEdit(){
     b.addEventListener('click', () => {
       pick.querySelectorAll('button').forEach(x => x.classList.remove('on'));
       b.classList.add('on');
+      drawAvPreview();
     });
     pick.appendChild(b);
   });
   $('edNick').value = me.nickname || '';
   $('edBio').value = me.bio || '';
+  drawAvPreview();
   $('editSheet').classList.add('on');
 }
 
@@ -1880,14 +1952,35 @@ $('edSave').addEventListener('click', async () => {
   const btn = $('edSave');
   btn.disabled = true; btn.textContent = '저장 중...';
 
+  let avatarUrl = me.avatar_url || null;
+
+  if(avNewFile){
+    btn.textContent = '사진 올리는 중';
+    try{
+      const ext = (avNewFile.name.split('.').pop() || 'jpg').toLowerCase();
+      const path = `${me.id}/avatar_${Date.now()}.${ext}`;
+      const { error: upErr } = await db.storage.from('avatars')
+        .upload(path, avNewFile, { cacheControl:'3600', upsert:true });
+      if(upErr) throw upErr;
+      const { data: pub } = db.storage.from('avatars').getPublicUrl(path);
+      avatarUrl = pub.publicUrl;
+    }catch(e){
+      btn.disabled = false; btn.textContent = '저장';
+      return toast('사진 업로드에 실패했어요: ' + ko(e.message), 'bad');
+    }
+  } else if(avRemoved){
+    avatarUrl = null;
+  }
+
   const { error } = await db.from('profiles')
-    .update({ nickname: nick, bio, avatar_emoji: emoji })
+    .update({ nickname: nick, bio, avatar_emoji: emoji, avatar_url: avatarUrl })
     .eq('id', me.id);
 
   btn.disabled = false; btn.textContent = '저장';
   if(error) return toast(ko(error.message), 'bad');
 
-  me.nickname = nick; me.bio = bio; me.avatar_emoji = emoji;
+  me.nickname = nick; me.bio = bio; me.avatar_emoji = emoji; me.avatar_url = avatarUrl;
+  avNewFile = null; avRemoved = false;
   $('editSheet').classList.remove('on');
   toast('프로필을 수정했어요 🎀', 'good');
   openProfile(me.id);
