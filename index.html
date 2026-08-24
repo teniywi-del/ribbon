@@ -572,8 +572,8 @@
     content:""; position:absolute; left:0; top:3px; bottom:3px; width:1px;
     background:repeating-linear-gradient(180deg,var(--line) 0 3px,transparent 3px 6px);
   }
-  .pl b{ display:block; font-family:'Gowun Batang',serif; font-size:17px; }
-  .pl span{ font-size:10.5px; color:var(--sub); }
+  .pl b{ display:block; font-family:'Gowun Batang',serif; font-size:16px; }
+  .pl span{ font-size:9.5px; color:var(--sub); }
 
   .pf-btns{ display:flex; gap:8px; margin:12px 4px 0; position:relative; z-index:1; }
   .pf-btn{
@@ -899,8 +899,9 @@
 
         <div class="plaque">
           <div class="pl"><b id="pfPosts">0</b><span>글</span></div>
+          <div class="pl"><b id="pfFollowers">0</b><span>팔로워</span></div>
+          <div class="pl"><b id="pfFollowing">0</b><span>팔로잉</span></div>
           <div class="pl"><b id="pfLikes">0</b><span>받은 리본</span></div>
-          <div class="pl"><b id="pfComments">0</b><span>댓글</span></div>
         </div>
 
         <div class="pf-btns" id="pfBtns"></div>
@@ -999,7 +1000,9 @@ let me = null;          // 내 프로필
 let boards = [];        // 게시판 목록
 let zone = 'room';      // room | info
 let boardFilter = null; // null = 전체
+let scope = 'all';      // all | fol  (내 방 전용)
 let likedSet = new Set();
+let followingSet = new Set();
 
 /* ---------- 토스트 ---------- */
 function toast(text, type){
@@ -1174,8 +1177,15 @@ async function enter(){
   }
 
   await loadLiked();
+  await loadFollowing();
   screen('home');
   loadFeed();
+}
+
+async function loadFollowing(){
+  if(!me) return;
+  const { data } = await db.from('follows').select('following_id').eq('follower_id', me.id);
+  followingSet = new Set((data || []).map(r => r.following_id));
 }
 
 async function loadLiked(){
@@ -1191,6 +1201,22 @@ function buildBoardChips(){
     const bar = $('subbar');
     const list = boards.filter(b => b.zone === zone);
     bar.innerHTML = '';
+
+    if(zone === 'room'){
+      const seg = document.createElement('div');
+      seg.className = 'seg';
+      seg.innerHTML =
+        `<button class="${scope === 'all' ? 'on' : ''}">전체</button>` +
+        `<button class="${scope === 'fol' ? 'on' : ''}">팔로잉</button>`;
+      const [bAll, bFol] = seg.querySelectorAll('button');
+      bAll.addEventListener('click', () => { scope = 'all'; buildBoardChips(); loadFeed(); });
+      bFol.addEventListener('click', () => { scope = 'fol'; buildBoardChips(); loadFeed(); });
+      bar.appendChild(seg);
+
+      const sp = document.createElement('div');
+      sp.className = 'sep';
+      bar.appendChild(sp);
+    }
 
     const all = document.createElement('button');
     all.className = 'chip' + (zone === 'info' ? ' g' : '') + (boardFilter === null ? ' on' : '');
@@ -1231,15 +1257,33 @@ async function loadFeed(){
 
   let q = db.from('posts')
     .select('*, author:profiles!posts_author_id_fkey(nickname, handle, avatar_emoji, avatar_url), boards(label, zone), post_media(url, kind, sort_order)')
-    .in('board_id', targets)
-    .order('created_at', { ascending:false })
-    .limit(50);
+    .in('board_id', targets);
+
+  if(zone === 'room' && scope === 'fol'){
+    const ids = [...followingSet, me.id];
+    q = q.in('author_id', ids);
+  }
+
+  q = q.order('created_at', { ascending:false }).limit(50);
 
   const { data, error } = await q;
 
   if(error){ feed.innerHTML = '<div class="loading">' + esc(ko(error.message)) + '</div>'; return; }
 
   if(!data || !data.length){
+    if(zone === 'room' && scope === 'fol'){
+      feed.innerHTML = `
+        <div class="empty">
+          <span class="e">🎀</span>
+          <h3>아직 조용하네요</h3>
+          <p>팔로우한 사람이 늘어나면<br>이 방이 더 북적여질 거예요.</p>
+          <button id="emptyAll">전체 글 보러가기</button>
+        </div>`;
+      $('emptyAll').addEventListener('click', () => {
+        scope = 'all'; buildBoardChips(); loadFeed();
+      });
+      return;
+    }
     feed.innerHTML = `
       <div class="empty">
         <span class="e">🎀</span>
@@ -1801,11 +1845,17 @@ async function openProfile(userId){
     new Date(u.created_at).toLocaleDateString('ko-KR', { year:'numeric', month:'long' }) + '부터 함께해요';
 
   const btns = $('pfBtns');
-  btns.innerHTML = mine
-    ? '<button class="pf-btn fill" id="pfEdit">프로필 수정</button>'
-    : '<button class="pf-btn" id="pfSoon">메시지</button>';
-  if(mine) $('pfEdit').addEventListener('click', openEdit);
-  else $('pfSoon').addEventListener('click', () => toast('DM은 곧 만들 거예요 🎀'));
+  if(mine){
+    btns.innerHTML = '<button class="pf-btn fill" id="pfEdit">프로필 수정</button>';
+    $('pfEdit').addEventListener('click', openEdit);
+  } else {
+    const isFol = followingSet.has(u.id);
+    btns.innerHTML =
+      `<button class="pf-btn${isFol ? '' : ' fill'}" id="pfFollow">${isFol ? '팔로잉' : '팔로우'}</button>` +
+      '<button class="pf-btn" id="pfSoon">메시지</button>';
+    $('pfFollow').addEventListener('click', () => toggleFollow(u.id, $('pfFollow')));
+    $('pfSoon').addEventListener('click', () => toast('DM은 곧 만들 거예요 🎀'));
+  }
 
   loadProfileStats(u.id);
   loadProfileTab();
@@ -1814,11 +1864,15 @@ async function openProfile(userId){
 
 async function loadProfileStats(uid){
   const { data: posts } = await db.from('posts').select('like_count').eq('author_id', uid);
-  const { count: cCount } = await db.from('comments')
-    .select('id', { count:'exact', head:true }).eq('author_id', uid);
+  const { count: followers } = await db.from('follows')
+    .select('follower_id', { count:'exact', head:true }).eq('following_id', uid);
+  const { count: following } = await db.from('follows')
+    .select('following_id', { count:'exact', head:true }).eq('follower_id', uid);
+
   $('pfPosts').textContent = (posts || []).length;
   $('pfLikes').textContent = (posts || []).reduce((a, p) => a + (p.like_count || 0), 0);
-  $('pfComments').textContent = cCount || 0;
+  $('pfFollowers').textContent = followers || 0;
+  $('pfFollowing').textContent = following || 0;
 }
 
 document.querySelectorAll('.pf-tab').forEach(t => {
@@ -1882,6 +1936,37 @@ async function loadProfileTab(){
 }
 
 $('pfBack').addEventListener('click', () => { screen('home'); loadFeed(); });
+
+async function toggleFollow(targetId, btn){
+  if(!me || targetId === me.id) return;
+  const was = followingSet.has(targetId);
+
+  btn.disabled = true;
+  btn.classList.toggle('fill', was);
+  btn.textContent = was ? '팔로우' : '팔로잉';
+
+  let error;
+  if(was){
+    followingSet.delete(targetId);
+    ({ error } = await db.from('follows').delete()
+      .eq('follower_id', me.id).eq('following_id', targetId));
+  } else {
+    followingSet.add(targetId);
+    ({ error } = await db.from('follows')
+      .insert({ follower_id: me.id, following_id: targetId }));
+  }
+
+  btn.disabled = false;
+  if(error){
+    btn.classList.toggle('fill', !was);
+    btn.textContent = was ? '팔로잉' : '팔로우';
+    if(was) followingSet.add(targetId); else followingSet.delete(targetId);
+    return toast(ko(error.message), 'bad');
+  }
+
+  toast(was ? '팔로우를 취소했어요' : '팔로우했어요 🎀', was ? '' : 'good');
+  loadProfileStats(targetId);
+}
 
 /* ---------- 프로필 수정 ---------- */
 const EMOJIS = ['🌷','🎀','🐰','🍰','☁️','🌸','✏️','🎨','💗','⭐','🌙','🧸','🍓','🕊️','🫧','🪞'];
