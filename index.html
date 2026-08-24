@@ -448,6 +448,19 @@
     background:linear-gradient(180deg,var(--ribbon),var(--ribbon-deep));
     padding:2px 6px; border-radius:5px;
   }
+
+  /* Host 뱃지 */
+  .host{
+    display:inline-flex; align-items:center; gap:3px;
+    font-size:9.5px; font-weight:700; letter-spacing:.3px;
+    color:#fff; background:linear-gradient(180deg,var(--ribbon),var(--ribbon-deep));
+    padding:2.5px 7px 2.5px 6px; border-radius:999px;
+    box-shadow:0 2px 5px rgba(217,113,143,0.3);
+    flex-shrink:0; vertical-align:middle;
+  }
+  .host svg{ width:9px; height:9px; fill:#fff; display:block; }
+  .host.lg{ font-size:11px; padding:4px 10px 4px 8px; gap:4px; }
+  .host.lg svg{ width:11px; height:11px; }
   .c-time{ font-size:11px; color:var(--sub); margin-left:auto; }
   .c-text{ font-size:13.5px; line-height:1.7; white-space:pre-wrap; word-break:break-word; }
   .c-acts{ display:flex; gap:14px; margin-top:7px; }
@@ -1454,7 +1467,7 @@ async function loadFeed(){
   const targets = boardFilter ? [boardFilter] : zoneBoards;
 
   let q = db.from('posts')
-    .select('*, author:profiles!posts_author_id_fkey(nickname, handle, avatar_emoji, avatar_url), boards(label, zone), post_media(url, kind, sort_order)')
+    .select('*, author:profiles!posts_author_id_fkey(id, nickname, handle, avatar_emoji, avatar_url, role), boards(label, zone), post_media(url, kind, sort_order)')
     .in('board_id', targets);
 
   if(zone === 'room' && scope === 'fol'){
@@ -1497,6 +1510,17 @@ async function loadFeed(){
   data.forEach(p => feed.appendChild(postCard(p)));
 }
 
+const CROWN = '<svg viewBox="0 0 24 18"><path d="M2 16h20l1.4-11.3a.6.6 0 0 0-1-.5L17 8.4 12.6 1a.7.7 0 0 0-1.2 0L7 8.4 1.6 4.2a.6.6 0 0 0-1 .5L2 16z"/></svg>';
+
+function hostBadge(u, big){
+  if(!u || (u.role !== 'owner' && u.role !== 'admin')) return '';
+  return `<span class="host${big ? ' lg' : ''}">${CROWN}Host</span>`;
+}
+
+function isStaff(u){
+  return u && (u.role === 'owner' || u.role === 'admin');
+}
+
 function avatarInner(u){
   if(u && u.avatar_url) return `<img src="${esc(u.avatar_url)}" alt="">`;
   return esc((u && u.avatar_emoji) || '🌷');
@@ -1524,13 +1548,13 @@ function postCard(p){
   const el = document.createElement('div');
   el.className = 'post' + (p.boards?.zone === 'info' ? ' info' : '');
   const liked = likedSet.has(p.id);
-  const mine = me && p.author_id === me.id;
+  const mine = me && (p.author_id === me.id || isStaff(me));
 
   el.innerHTML = `
     <div class="p-head">
       <div class="avatar">${avatarInner(p.author)}</div>
       <div>
-        <div class="p-name">${esc(p.author?.nickname || '알 수 없음')}</div>
+        <div class="p-name">${esc(p.author?.nickname || '알 수 없음')} ${hostBadge(p.author)}</div>
         <div class="p-meta">${esc(p.boards?.label || '')} · ${timeAgo(p.created_at)}</div>
       </div>
       ${mine ? '<button class="p-del">⋯</button>' : ''}
@@ -1601,10 +1625,6 @@ async function toggleLike(postId, btn){
     if(wasLiked) likedSet.add(postId); else likedSet.delete(postId);
     return toast(ko(error.message), 'bad');
   }
-
-  // 카운트 저장
-  const newCount = parseInt(b.textContent) || 0;
-  await db.from('posts').update({ like_count: newCount }).eq('id', postId);
 
   if(!wasLiked){
     const { data: p } = await db.from('posts').select('author_id, title').eq('id', postId).single();
@@ -1784,7 +1804,7 @@ async function openDetail(postId){
   cancelReply();
 
   const { data: p, error } = await db.from('posts')
-    .select('*, author:profiles!posts_author_id_fkey(nickname, handle, avatar_emoji, avatar_url), boards(label, zone), post_media(url, kind, sort_order)')
+    .select('*, author:profiles!posts_author_id_fkey(id, nickname, handle, avatar_emoji, avatar_url, role), boards(label, zone), post_media(url, kind, sort_order)')
     .eq('id', postId).single();
 
   if(error){ $('dBody').innerHTML = '<div class="loading">' + esc(ko(error.message)) + '</div>'; return; }
@@ -1793,7 +1813,7 @@ async function openDetail(postId){
   curMedia = [...(p.post_media || [])].sort((a,b) => a.sort_order - b.sort_order);
   const isInfo = p.boards?.zone === 'info';
   const liked = likedSet.has(p.id);
-  const mine = me && p.author_id === me.id;
+  const mine = me && (p.author_id === me.id || isStaff(me));
 
   $('dBoard').textContent = p.boards?.label || '글';
   $('dDelete').style.display = mine ? 'block' : 'none';
@@ -1804,7 +1824,7 @@ async function openDetail(postId){
     <div class="d-author">
       <div class="avatar">${avatarInner(p.author)}</div>
       <div>
-        <div class="d-aname">${esc(p.author?.nickname || '알 수 없음')}</div>
+        <div class="d-aname">${esc(p.author?.nickname || '알 수 없음')} ${hostBadge(p.author)}</div>
         <div class="d-atime">${timeAgo(p.created_at)}</div>
       </div>
     </div>
@@ -1869,7 +1889,6 @@ async function toggleLikeDetail(postId, btn){
     if(wasLiked) likedSet.add(postId); else likedSet.delete(postId);
     return toast(ko(error.message), 'bad');
   }
-  await db.from('posts').update({ like_count: parseInt(span.textContent) || 0 }).eq('id', postId);
   if(!wasLiked && curPost) notify(curPost.author_id, 'like', { postId, preview: curPost.title });
 }
 
@@ -1879,7 +1898,7 @@ async function loadComments(postId){
   box.innerHTML = '<div class="loading">불러오는 중...</div>';
 
   const { data, error } = await db.from('comments')
-    .select('*, author:profiles!comments_author_id_fkey(nickname, avatar_emoji, avatar_url)')
+    .select('*, author:profiles!comments_author_id_fkey(id, nickname, avatar_emoji, avatar_url, role)')
     .eq('post_id', postId)
     .order('created_at', { ascending:true });
 
@@ -1913,7 +1932,7 @@ async function loadComments(postId){
 function commentNode(c, isReply){
   const el = document.createElement('div');
   el.className = isReply ? 'reply' : 'comment';
-  const mine = me && c.author_id === me.id;
+  const mine = me && (c.author_id === me.id || isStaff(me));
   const isAuthor = curPost && c.author_id === curPost.author_id;
 
   el.innerHTML = `
@@ -1921,6 +1940,7 @@ function commentNode(c, isReply){
     <div class="c-main">
       <div class="c-top">
         <span class="c-name">${esc(c.author?.nickname || '알 수 없음')}</span>
+        ${hostBadge(c.author)}
         ${isAuthor ? '<span class="c-badge">작성자</span>' : ''}
         <span class="c-time">${timeAgo(c.created_at)}</span>
       </div>
@@ -1992,13 +2012,7 @@ async function sendComment(){
   $('dScroll').scrollTop = $('dScroll').scrollHeight;
 }
 
-async function refreshCommentCount(){
-  if(!curPost) return;
-  const { count } = await db.from('comments')
-    .select('id', { count:'exact', head:true })
-    .eq('post_id', curPost.id);
-  await db.from('posts').update({ comment_count: count || 0 }).eq('id', curPost.id);
-}
+async function refreshCommentCount(){ /* DB 트리거가 자동 계산 */ }
 
 /* ================= 사진 크게 보기 ================= */
 let lbIndex = 0;
@@ -2045,7 +2059,7 @@ async function openProfile(userId){
   const mine = me && u.id === me.id;
   $('pfHeadName').textContent = u.nickname;
   $('pfAvatar').innerHTML = avatarInner(u);
-  $('pfName').textContent = u.nickname;
+  $('pfName').innerHTML = esc(u.nickname) + ' ' + hostBadge(u, true);
   $('pfHandle').textContent = '@' + u.handle;
   $('pfBio').textContent = u.bio || (mine ? '아직 소개가 없어요. 프로필 수정에서 추가해보세요!' : '');
   $('pfSince').textContent = '🗓 ' +
@@ -2122,7 +2136,7 @@ async function loadProfileTab(){
 
   const zoneBoards = boards.filter(b => b.zone === pfTab).map(b => b.id);
   const { data, error } = await db.from('posts')
-    .select('*, author:profiles!posts_author_id_fkey(nickname, handle, avatar_emoji, avatar_url), boards(label, zone), post_media(url, kind, sort_order)')
+    .select('*, author:profiles!posts_author_id_fkey(id, nickname, handle, avatar_emoji, avatar_url, role), boards(label, zone), post_media(url, kind, sort_order)')
     .eq('author_id', pfUser.id)
     .in('board_id', zoneBoards)
     .order('created_at', { ascending:false });
@@ -2401,7 +2415,7 @@ async function openDM(){
   box.innerHTML = '<div class="loading">불러오는 중...</div>';
 
   const { data, error } = await db.from('conversations')
-    .select('*, a:profiles!conversations_user_a_fkey(id, nickname, avatar_emoji, avatar_url), b:profiles!conversations_user_b_fkey(id, nickname, avatar_emoji, avatar_url)')
+    .select('*, a:profiles!conversations_user_a_fkey(id, nickname, avatar_emoji, avatar_url, role), b:profiles!conversations_user_b_fkey(id, nickname, avatar_emoji, avatar_url, role)')
     .or(`user_a.eq.${me.id},user_b.eq.${me.id}`)
     .order('last_message_at', { ascending:false });
 
@@ -2426,7 +2440,7 @@ async function openDM(){
       <div class="avatar">${avatarInner(other)}</div>
       <div class="dm-main">
         <div class="dm-top">
-          <span class="dm-name">${esc(other?.nickname || '알 수 없음')}</span>
+          <span class="dm-name">${esc(other?.nickname || '알 수 없음')} ${hostBadge(other)}</span>
           <span class="dm-time">${c.last_message_at ? timeAgo(c.last_message_at) : ''}</span>
         </div>
         <div class="dm-last">${esc(c.last_message || '대화를 시작해보세요')}</div>
