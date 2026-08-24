@@ -585,7 +585,7 @@
     content:""; position:absolute; left:0; top:3px; bottom:3px; width:1px;
     background:repeating-linear-gradient(180deg,var(--line) 0 3px,transparent 3px 6px);
   }
-  .pl b{ display:block; font-family:'Gowun Batang',serif; font-size:16px; }
+  .pl b{ display:block; font-family:'Gowun Batang',serif; font-size:16px; white-space:nowrap; }
   .pl span{ font-size:9.5px; color:var(--sub); }
 
   .pf-btns{ display:flex; gap:8px; margin:12px 4px 0; position:relative; z-index:1; }
@@ -656,6 +656,69 @@
     box-shadow:0 5px 13px rgba(217,113,143,0.3);
   }
   textarea.input{ resize:none; min-height:80px; line-height:1.7; }
+
+  /* 팔로워/팔로잉 목록 */
+  .pl.clickable{ cursor:pointer; }
+  .fl-head{
+    display:flex; align-items:center; gap:10px;
+    margin-bottom:6px;
+  }
+  .fl-head .sheet-t{ margin:0; flex:1; text-align:left; }
+  .fl-close{
+    background:none; border:none; color:var(--sub);
+    font-size:17px; cursor:pointer; padding:4px;
+  }
+  .fl-row{
+    display:flex; align-items:center; gap:11px;
+    padding:12px 0; border-bottom:1px dashed var(--line);
+  }
+  .fl-row:last-child{ border-bottom:none; }
+  .fl-main{ flex:1; min-width:0; cursor:pointer; }
+  .fl-name{ font-size:13.5px; font-weight:700; }
+  .fl-bio{
+    font-size:11px; color:var(--sub); margin-top:2px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .fl-btn{
+    font-family:inherit; font-size:11.5px; font-weight:700;
+    color:var(--ribbon-deep); background:#fff;
+    border:1.5px solid var(--ribbon);
+    padding:7px 14px; border-radius:999px;
+    cursor:pointer; flex-shrink:0;
+  }
+  .fl-btn.on{
+    background:linear-gradient(180deg,var(--ribbon),var(--ribbon-deep));
+    color:#fff; border-color:transparent;
+  }
+  .fl-list{ max-height:56vh; overflow-y:auto; }
+
+  /* 설정 토글 */
+  .opt-row{
+    display:flex; align-items:center; gap:11px;
+    padding:13px 14px; background:#FFFAFC;
+    border:1px solid var(--line); border-radius:14px;
+  }
+  .opt-main{ flex:1; min-width:0; }
+  .opt-name{ font-size:13px; font-weight:500; }
+  .opt-desc{ font-size:10.5px; color:var(--sub); margin-top:3px; line-height:1.5; }
+  .sw{
+    width:42px; height:24px; border-radius:999px;
+    background:#EFE2E7; position:relative; flex-shrink:0;
+    cursor:pointer; transition:.2s; border:none;
+  }
+  .sw::after{
+    content:""; position:absolute; top:3px; left:3px;
+    width:18px; height:18px; border-radius:50%;
+    background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.15); transition:.2s;
+  }
+  .sw.on{ background:linear-gradient(180deg,var(--ribbon),var(--ribbon-deep)); }
+  .sw.on::after{ left:21px; }
+
+  .lock-note{
+    text-align:center; padding:30px 10px;
+    color:var(--sub); font-size:12.5px; line-height:1.9;
+  }
+  .lock-note .e{ font-size:30px; display:block; margin-bottom:10px; opacity:.6; }
 
   /* 아바타 사진 */
   .avatar img, .locket-body img{
@@ -1223,8 +1286,8 @@
 
         <div class="plaque">
           <div class="pl"><b id="pfPosts">0</b><span>글</span></div>
-          <div class="pl"><b id="pfFollowers">0</b><span>팔로워</span></div>
-          <div class="pl"><b id="pfFollowing">0</b><span>팔로잉</span></div>
+          <div class="pl clickable" id="plFollowers"><b id="pfFollowers">0</b><span>팔로워</span></div>
+          <div class="pl clickable" id="plFollowing"><b id="pfFollowing">0</b><span>팔로잉</span></div>
           <div class="pl"><b id="pfLikes">0</b><span>받은 리본</span></div>
         </div>
 
@@ -1247,6 +1310,17 @@
       <button class="nav-item" data-go="noti"><span class="ic">🔔</span>알림<span class="nav-badge">0</span></button>
       <button class="nav-item" data-go="dm"><span class="ic">✉️</span>쪽지</button>
       <button class="nav-item on" data-go="me"><span class="ic">🌷</span>프로필</button>
+    </div>
+  </div>
+
+  <!-- 팔로워/팔로잉 목록 -->
+  <div class="sheet" id="flSheet">
+    <div class="sheet-box">
+      <div class="fl-head">
+        <div class="sheet-t" id="flTitle">팔로워</div>
+        <button class="fl-close" id="flClose">✕</button>
+      </div>
+      <div class="fl-list" id="flList"></div>
     </div>
   </div>
 
@@ -1277,6 +1351,17 @@
       <div class="field">
         <label class="label">소개</label>
         <textarea class="input" id="edBio" maxlength="120" placeholder="어떤 걸 좋아하는지 알려주세요 🎀"></textarea>
+      </div>
+
+      <div class="field">
+        <label class="label">공개 범위</label>
+        <div class="opt-row">
+          <div class="opt-main">
+            <div class="opt-name">팔로잉 목록 비공개</div>
+            <div class="opt-desc">내가 팔로우한 사람을 나만 볼 수 있어요</div>
+          </div>
+          <button class="sw" id="edHide"></button>
+        </div>
       </div>
 
       <div class="sheet-actions">
@@ -2211,7 +2296,8 @@ async function loadProfileStats(uid){
   $('pfPosts').textContent = (posts || []).length;
   $('pfLikes').textContent = (posts || []).reduce((a, p) => a + (p.like_count || 0), 0);
   $('pfFollowers').textContent = followers || 0;
-  $('pfFollowing').textContent = following || 0;
+  const hidden = pfUser && pfUser.hide_following && (!me || pfUser.id !== me.id);
+  $('pfFollowing').textContent = hidden ? '비공개' : (following || 0);
 }
 
 document.querySelectorAll('.pf-tab').forEach(t => {
@@ -2281,7 +2367,7 @@ async function toggleFollow(targetId, btn){
   const was = followingSet.has(targetId);
 
   btn.disabled = true;
-  btn.classList.toggle('fill', was);
+  if(btn.classList.contains('pf-btn')) btn.classList.toggle('fill', was);
   btn.textContent = was ? '팔로우' : '팔로잉';
 
   let error;
@@ -2297,7 +2383,7 @@ async function toggleFollow(targetId, btn){
 
   btn.disabled = false;
   if(error){
-    btn.classList.toggle('fill', !was);
+    if(btn.classList.contains('pf-btn')) btn.classList.toggle('fill', !was);
     btn.textContent = was ? '팔로잉' : '팔로우';
     if(was) followingSet.add(targetId); else followingSet.delete(targetId);
     return toast(ko(error.message), 'bad');
@@ -2306,6 +2392,86 @@ async function toggleFollow(targetId, btn){
   if(!was) notify(targetId, 'follow', {});
   toast(was ? '팔로우를 취소했어요' : '팔로우했어요 🎀', was ? '' : 'good');
   loadProfileStats(targetId);
+}
+
+/* ---------- 팔로워 / 팔로잉 목록 ---------- */
+$('plFollowers').addEventListener('click', () => openFollowList('followers'));
+$('plFollowing').addEventListener('click', () => openFollowList('following'));
+$('flClose').addEventListener('click', () => $('flSheet').classList.remove('on'));
+$('flSheet').addEventListener('click', e => {
+  if(e.target === $('flSheet')) $('flSheet').classList.remove('on');
+});
+
+async function openFollowList(kind){
+  if(!pfUser) return;
+  const box = $('flList');
+  $('flTitle').textContent = kind === 'followers' ? '팔로워' : '팔로잉';
+  box.innerHTML = '<div class="loading">불러오는 중...</div>';
+  $('flSheet').classList.add('on');
+
+  if(kind === 'following' && pfUser.hide_following && (!me || pfUser.id !== me.id)){
+    box.innerHTML = `
+      <div class="lock-note">
+        <span class="e">🔐</span>
+        ${esc(pfUser.nickname)}님은<br>팔로잉 목록을 비공개로 하고 있어요.
+      </div>`;
+    return;
+  }
+
+  const q = kind === 'followers'
+    ? db.from('follows')
+        .select('u:profiles!follows_follower_id_fkey(id, nickname, handle, bio, avatar_emoji, avatar_url, role)')
+        .eq('following_id', pfUser.id)
+    : db.from('follows')
+        .select('u:profiles!follows_following_id_fkey(id, nickname, handle, bio, avatar_emoji, avatar_url, role)')
+        .eq('follower_id', pfUser.id);
+
+  const { data, error } = await q.order('created_at', { ascending:false }).limit(100);
+
+  if(error){ box.innerHTML = '<div class="c-empty">' + esc(ko(error.message)) + '</div>'; return; }
+
+  const list = (data || []).map(r => r.u).filter(Boolean);
+
+  if(!list.length){
+    box.innerHTML = `<div class="c-empty" style="background:none">${
+      kind === 'followers' ? '아직 팔로워가 없어요 🎀' : '아직 팔로우한 사람이 없어요 🎀'
+    }</div>`;
+    return;
+  }
+
+  box.innerHTML = '';
+  list.forEach(u => {
+    const row = document.createElement('div');
+    row.className = 'fl-row';
+    const isMe = me && u.id === me.id;
+    const isFol = followingSet.has(u.id);
+
+    row.innerHTML = `
+      <div class="avatar">${avatarInner(u)}</div>
+      <div class="fl-main">
+        <div class="fl-name">${esc(u.nickname)} ${hostBadge(u)}</div>
+        <div class="fl-bio">@${esc(u.handle)}${u.bio ? ' · ' + esc(u.bio) : ''}</div>
+      </div>
+      ${isMe ? '' : `<button class="fl-btn${isFol ? ' on' : ''}">${isFol ? '팔로잉' : '팔로우'}</button>`}`;
+
+    row.querySelector('.fl-main').addEventListener('click', () => {
+      $('flSheet').classList.remove('on');
+      openProfile(u.id);
+    });
+    row.querySelector('.avatar').addEventListener('click', () => {
+      $('flSheet').classList.remove('on');
+      openProfile(u.id);
+    });
+
+    const btn = row.querySelector('.fl-btn');
+    if(btn) btn.addEventListener('click', async () => {
+      await toggleFollow(u.id, btn);
+      btn.classList.toggle('on', followingSet.has(u.id));
+      btn.textContent = followingSet.has(u.id) ? '팔로잉' : '팔로우';
+    });
+
+    box.appendChild(row);
+  });
 }
 
 /* ---------- 프로필 수정 ---------- */
@@ -2358,9 +2524,12 @@ function openEdit(){
   });
   $('edNick').value = me.nickname || '';
   $('edBio').value = me.bio || '';
+  $('edHide').classList.toggle('on', !!me.hide_following);
   drawAvPreview();
   $('editSheet').classList.add('on');
 }
+
+$('edHide').addEventListener('click', () => $('edHide').classList.toggle('on'));
 
 $('edCancel').addEventListener('click', () => $('editSheet').classList.remove('on'));
 $('editSheet').addEventListener('click', e => {
@@ -2397,14 +2566,17 @@ $('edSave').addEventListener('click', async () => {
     avatarUrl = null;
   }
 
+  const hideFol = $('edHide').classList.contains('on');
+
   const { error } = await db.from('profiles')
-    .update({ nickname: nick, bio, avatar_emoji: emoji, avatar_url: avatarUrl })
+    .update({ nickname: nick, bio, avatar_emoji: emoji, avatar_url: avatarUrl, hide_following: hideFol })
     .eq('id', me.id);
 
   btn.disabled = false; btn.textContent = '저장';
   if(error) return toast(ko(error.message), 'bad');
 
-  me.nickname = nick; me.bio = bio; me.avatar_emoji = emoji; me.avatar_url = avatarUrl;
+  me.nickname = nick; me.bio = bio; me.avatar_emoji = emoji;
+  me.avatar_url = avatarUrl; me.hide_following = hideFol;
   avNewFile = null; avRemoved = false;
   $('editSheet').classList.remove('on');
   toast('프로필을 수정했어요 🎀', 'good');
