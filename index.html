@@ -272,10 +272,10 @@
   }
   .nav-item{
     flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
-    background:none; border:none; font-family:inherit; font-size:9.5px;
+    background:none; border:none; font-family:inherit; font-size:9px;
     color:var(--sub); cursor:pointer; padding:5px 0;
   }
-  .nav-item .ic{ font-size:17px; }
+  .nav-item .ic{ font-size:16px; }
   .nav-item.on{ color:var(--ribbon-deep); font-weight:700; }
 
   /* ============ 글쓰기 ============ */
@@ -744,6 +744,66 @@
 
   .row-time{ font-size:10px; color:var(--sub); margin:3px 4px 8px; }
 
+  /* ============ 알림 ============ */
+  .nt-tabs{
+    display:flex; margin:0 18px 8px; padding:4px;
+    background:linear-gradient(180deg,#FCEDF1,#F9E1E9); border-radius:999px; flex-shrink:0;
+  }
+  .nt-tab{
+    flex:1; font-family:inherit; font-size:12px; color:var(--sub);
+    background:none; border:none; padding:8px 0; border-radius:999px;
+    cursor:pointer; transition:.15s;
+  }
+  .nt-tab.on{ background:#fff; color:var(--ribbon-deep); font-weight:700; box-shadow:0 2px 6px rgba(217,113,143,0.18); }
+
+  .noti{
+    display:flex; align-items:flex-start; gap:11px;
+    padding:13px 18px; cursor:pointer; position:relative;
+  }
+  .noti:active{ background:#FFFAFC; }
+  .noti.unread{ background:linear-gradient(90deg,#FFF3F7,#FFFAFC 70%); }
+  .noti.unread::before{
+    content:""; position:absolute; left:0; top:8px; bottom:8px;
+    width:3px; border-radius:0 3px 3px 0;
+    background:linear-gradient(180deg,var(--ribbon),var(--ribbon-deep));
+  }
+  .av-wrap{ position:relative; flex-shrink:0; }
+  .ntype{
+    position:absolute; right:-3px; bottom:-3px;
+    width:20px; height:20px; border-radius:50%;
+    border:2px solid #fff;
+    display:flex; align-items:center; justify-content:center; font-size:9.5px;
+  }
+  .ntype.like{ background:linear-gradient(180deg,var(--ribbon),var(--ribbon-deep)); }
+  .ntype.comment, .ntype.reply{ background:linear-gradient(180deg,#A5C9E8,#7FA9CE); }
+  .ntype.follow{ background:linear-gradient(180deg,#F3D394,var(--gold)); }
+  .ntype.dm{ background:linear-gradient(180deg,#D9BDE8,#B995CE); }
+  .ntype.notice{ background:linear-gradient(180deg,#BFE0C4,#93C4A0); }
+
+  .n-main{ flex:1; min-width:0; }
+  .n-text{ font-size:13.5px; line-height:1.6; }
+  .n-quote{
+    font-size:12.5px; color:var(--sub);
+    background:#FFFAFC; border-left:2px solid var(--line);
+    padding:7px 10px; border-radius:0 8px 8px 0; margin-top:6px; line-height:1.55;
+    overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+  }
+  .n-time{ font-size:11px; color:var(--sub); margin-top:5px; }
+  .read-all{
+    margin-left:auto; font-family:inherit; font-size:11.5px;
+    color:var(--sub); background:none; border:none; cursor:pointer;
+  }
+  .nav-item{ position:relative; }
+  .nav-badge{
+    position:absolute; top:2px; left:50%; margin-left:6px;
+    min-width:15px; height:15px; border-radius:999px;
+    background:var(--ribbon-deep); color:#fff;
+    font-size:8.5px; font-weight:700;
+    display:none; align-items:center; justify-content:center;
+    padding:0 4px; border:1.5px solid #fff;
+  }
+  .nav-badge.on{ display:flex; }
+
   /* ============ 내 정보 ============ */
   .me-wrap{ padding:30px 20px; text-align:center; }
   .me-av{
@@ -880,8 +940,9 @@
     <div class="nav">
       <button class="nav-item on" data-go="home"><span class="ic">🏠</span>홈</button>
       <button class="nav-item" data-go="write"><span class="ic">✏️</span>글쓰기</button>
+      <button class="nav-item" data-go="noti"><span class="ic">🔔</span>알림<span class="nav-badge">0</span></button>
       <button class="nav-item" data-go="dm"><span class="ic">✉️</span>쪽지</button>
-      <button class="nav-item" data-go="me"><span class="ic">🌷</span>내 프로필</button>
+      <button class="nav-item" data-go="me"><span class="ic">🌷</span>프로필</button>
     </div>
   </div>
 
@@ -951,6 +1012,30 @@
     </div>
   </div>
 
+  <!-- ==================== 알림 ==================== -->
+  <div class="screen" id="notiScreen">
+    <div class="d-head">
+      <div class="d-title" style="font-size:19px">알림</div>
+      <button class="read-all" id="readAll">모두 읽음</button>
+    </div>
+    <div class="nt-tabs">
+      <button class="nt-tab on" data-nt="all">전체</button>
+      <button class="nt-tab" data-nt="like">🎀 좋아요</button>
+      <button class="nt-tab" data-nt="comment">💬 댓글</button>
+      <button class="nt-tab" data-nt="follow">팔로우</button>
+    </div>
+    <div class="scroll">
+      <div id="notiList"></div>
+    </div>
+    <div class="nav">
+      <button class="nav-item" data-go="home"><span class="ic">🏠</span>홈</button>
+      <button class="nav-item" data-go="write"><span class="ic">✏️</span>글쓰기</button>
+      <button class="nav-item on" data-go="noti"><span class="ic">🔔</span>알림<span class="nav-badge">0</span></button>
+      <button class="nav-item" data-go="dm"><span class="ic">✉️</span>쪽지</button>
+      <button class="nav-item" data-go="me"><span class="ic">🌷</span>프로필</button>
+    </div>
+  </div>
+
   <!-- ==================== DM 목록 ==================== -->
   <div class="screen" id="dmScreen">
     <div class="d-head">
@@ -963,8 +1048,9 @@
     <div class="nav">
       <button class="nav-item" data-go="home"><span class="ic">🏠</span>홈</button>
       <button class="nav-item" data-go="write"><span class="ic">✏️</span>글쓰기</button>
+      <button class="nav-item" data-go="noti"><span class="ic">🔔</span>알림<span class="nav-badge">0</span></button>
       <button class="nav-item on" data-go="dm"><span class="ic">✉️</span>쪽지</button>
-      <button class="nav-item" data-go="me"><span class="ic">🌷</span>내 프로필</button>
+      <button class="nav-item" data-go="me"><span class="ic">🌷</span>프로필</button>
     </div>
   </div>
 
@@ -1026,8 +1112,9 @@
     <div class="nav">
       <button class="nav-item" data-go="home"><span class="ic">🏠</span>홈</button>
       <button class="nav-item" data-go="write"><span class="ic">✏️</span>글쓰기</button>
+      <button class="nav-item" data-go="noti"><span class="ic">🔔</span>알림<span class="nav-badge">0</span></button>
       <button class="nav-item" data-go="dm"><span class="ic">✉️</span>쪽지</button>
-      <button class="nav-item on" data-go="me"><span class="ic">🌷</span>내 프로필</button>
+      <button class="nav-item on" data-go="me"><span class="ic">🌷</span>프로필</button>
     </div>
   </div>
 
@@ -1289,6 +1376,8 @@ async function enter(){
   await loadFollowing();
   screen('home');
   loadFeed();
+  refreshBadge();
+  setInterval(refreshBadge, 30000);
 }
 
 async function loadFollowing(){
@@ -1516,6 +1605,11 @@ async function toggleLike(postId, btn){
   // 카운트 저장
   const newCount = parseInt(b.textContent) || 0;
   await db.from('posts').update({ like_count: newCount }).eq('id', postId);
+
+  if(!wasLiked){
+    const { data: p } = await db.from('posts').select('author_id, title').eq('id', postId).single();
+    if(p) notify(p.author_id, 'like', { postId, preview: p.title });
+  }
 }
 
 /* ================= 글쓰기 ================= */
@@ -1776,6 +1870,7 @@ async function toggleLikeDetail(postId, btn){
     return toast(ko(error.message), 'bad');
   }
   await db.from('posts').update({ like_count: parseInt(span.textContent) || 0 }).eq('id', postId);
+  if(!wasLiked && curPost) notify(curPost.author_id, 'like', { postId, preview: curPost.title });
 }
 
 /* ================= 댓글 ================= */
@@ -1886,6 +1981,9 @@ async function sendComment(){
 
   btn.disabled = false;
   if(error) return toast(ko(error.message), 'bad');
+
+  if(replyTo) notify(replyTo.author_id, 'reply', { postId: curPost.id, preview: text });
+  else notify(curPost.author_id, 'comment', { postId: curPost.id, preview: text });
 
   $('cField').value = '';
   cancelReply();
@@ -2073,6 +2171,7 @@ async function toggleFollow(targetId, btn){
     return toast(ko(error.message), 'bad');
   }
 
+  if(!was) notify(targetId, 'follow', {});
   toast(was ? '팔로우를 취소했어요' : '팔로우했어요 🎀', was ? '' : 'good');
   loadProfileStats(targetId);
 }
@@ -2178,6 +2277,118 @@ $('edSave').addEventListener('click', async () => {
   $('editSheet').classList.remove('on');
   toast('프로필을 수정했어요 🎀', 'good');
   openProfile(me.id);
+});
+
+/* ================= 알림 ================= */
+let notiFilter = 'all';
+
+async function notify(userId, kind, opts){
+  if(!me || !userId || userId === me.id) return;
+  await db.from('notifications').insert({
+    user_id: userId,
+    actor_id: me.id,
+    kind,
+    post_id: opts?.postId ?? null,
+    comment_id: opts?.commentId ?? null,
+    preview: opts?.preview ?? null
+  });
+}
+
+async function refreshBadge(){
+  if(!me) return;
+  const { count } = await db.from('notifications')
+    .select('id', { count:'exact', head:true })
+    .eq('user_id', me.id).is('read_at', null);
+
+  document.querySelectorAll('.nav-badge').forEach(b => {
+    b.textContent = count > 99 ? '99+' : count;
+    b.classList.toggle('on', (count || 0) > 0);
+  });
+}
+
+async function openNoti(){
+  screen('noti');
+  const box = $('notiList');
+  box.innerHTML = '<div class="loading">불러오는 중...</div>';
+
+  let q = db.from('notifications')
+    .select('*, actor:profiles!notifications_actor_id_fkey(id, nickname, avatar_emoji, avatar_url)')
+    .eq('user_id', me.id)
+    .order('created_at', { ascending:false })
+    .limit(80);
+
+  if(notiFilter === 'like') q = q.eq('kind', 'like');
+  else if(notiFilter === 'comment') q = q.in('kind', ['comment','reply']);
+  else if(notiFilter === 'follow') q = q.eq('kind', 'follow');
+
+  const { data, error } = await q;
+  if(error){ box.innerHTML = '<div class="loading">' + esc(ko(error.message)) + '</div>'; return; }
+
+  if(!data || !data.length){
+    box.innerHTML = `
+      <div class="empty">
+        <span class="e">🔔</span>
+        <h3>알림이 없어요</h3>
+        <p>누가 리본을 누르거나 댓글을 달면<br>여기에 모여요 🎀</p>
+      </div>`;
+    return;
+  }
+
+  const TEXT = {
+    like:    n => `<b>${esc(n.actor?.nickname || '누군가')}</b>님이 회원님의 글을 좋아해요`,
+    comment: n => `<b>${esc(n.actor?.nickname || '누군가')}</b>님이 회원님의 글에 댓글을 남겼어요`,
+    reply:   n => `<b>${esc(n.actor?.nickname || '누군가')}</b>님이 회원님의 댓글에 답글을 남겼어요`,
+    follow:  n => `<b>${esc(n.actor?.nickname || '누군가')}</b>님이 회원님을 팔로우하기 시작했어요`,
+    dm:      n => `<b>${esc(n.actor?.nickname || '누군가')}</b>님이 메시지를 보냈어요`,
+    notice:  n => `<b>공지</b> ${esc(n.preview || '')}`
+  };
+
+  box.innerHTML = '';
+  data.forEach(n => {
+    const el = document.createElement('div');
+    el.className = 'noti' + (n.read_at ? '' : ' unread');
+    el.innerHTML = `
+      <div class="av-wrap">
+        <div class="avatar">${avatarInner(n.actor)}</div>
+        <div class="ntype ${esc(n.kind)}"></div>
+      </div>
+      <div class="n-main">
+        <p class="n-text">${(TEXT[n.kind] || TEXT.notice)(n)}</p>
+        ${n.preview && n.kind !== 'notice' ? `<div class="n-quote">${esc(n.preview)}</div>` : ''}
+        <div class="n-time">${timeAgo(n.created_at)}</div>
+      </div>`;
+
+    el.addEventListener('click', async () => {
+      if(!n.read_at){
+        await db.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', n.id);
+        el.classList.remove('unread');
+        refreshBadge();
+      }
+      if(n.post_id) openDetail(n.post_id);
+      else if(n.kind === 'follow' && n.actor_id) openProfile(n.actor_id);
+      else if(n.kind === 'dm') openDM();
+    });
+
+    box.appendChild(el);
+  });
+}
+
+document.querySelectorAll('.nt-tab').forEach(t => {
+  t.addEventListener('click', () => {
+    notiFilter = t.dataset.nt;
+    document.querySelectorAll('.nt-tab').forEach(x => x.classList.remove('on'));
+    t.classList.add('on');
+    openNoti();
+  });
+});
+
+$('readAll').addEventListener('click', async () => {
+  await db.from('notifications')
+    .update({ read_at: new Date().toISOString() })
+    .eq('user_id', me.id).is('read_at', null);
+  document.querySelectorAll('.noti.unread').forEach(n => n.classList.remove('unread'));
+  refreshBadge();
+  toast('모두 읽음 처리했어요');
 });
 
 /* ================= DM ================= */
@@ -2362,6 +2573,8 @@ async function sendMessage(){
     .update({ last_message: text, last_message_at: new Date().toISOString() })
     .eq('id', curConv.id);
 
+  if(curConv.other) notify(curConv.other.id, 'dm', { preview: text });
+
   $('mField').value = '';
   await loadMessages(true);
 }
@@ -2372,6 +2585,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
     const go = item.dataset.go;
     if(go === 'home'){ screen('home'); loadFeed(); }
     else if(go === 'write') openWrite();
+    else if(go === 'noti') openNoti();
     else if(go === 'dm') openDM();
     else if(go === 'me') openProfile(me.id);
   });
