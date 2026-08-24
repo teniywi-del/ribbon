@@ -309,6 +309,78 @@
   .content-input::placeholder{ color:#D9BFC7; }
   .w-len{ font-size:11.5px; color:var(--sub); text-align:right; }
 
+  /* 사진/영상 첨부 */
+  .img-head{ display:flex; align-items:center; justify-content:space-between; margin:16px 0 10px; }
+  .img-head-left{ font-size:12.5px; color:var(--sub); }
+  .counter{
+    font-size:11.5px; font-weight:700; color:var(--ribbon-deep);
+    background:#FCEDF1; padding:3px 9px; border-radius:999px;
+  }
+  .counter.vid{ background:#F1E7F5; color:#8A6BA0; margin-left:6px; }
+  .counter.full{ background:#FBEBD6; color:var(--gold-deep); }
+
+  .img-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .thumb{
+    aspect-ratio:1/1; border-radius:12px; position:relative;
+    background:linear-gradient(145deg,#FBE7EE,#F5D3DF);
+    overflow:visible;
+  }
+  .thumb img, .thumb video{
+    width:100%; height:100%; object-fit:cover; border-radius:12px; display:block;
+  }
+  .thumb.main::after{
+    content:"대표"; position:absolute; left:4px; bottom:4px;
+    font-size:9px; font-weight:700; color:#fff;
+    background:rgba(217,113,143,0.85); padding:2px 6px; border-radius:6px;
+  }
+  .thumb .del{
+    position:absolute; top:-6px; right:-6px;
+    width:20px; height:20px; border-radius:50%;
+    background:var(--ribbon-deep); color:#fff; font-size:11px;
+    display:flex; align-items:center; justify-content:center;
+    border:2px solid #fff; cursor:pointer; line-height:1;
+  }
+  .thumb .up{
+    position:absolute; inset:0; border-radius:12px;
+    background:rgba(255,255,255,.75);
+    display:flex; align-items:center; justify-content:center;
+    font-size:10px; color:var(--ribbon-deep); font-weight:700;
+  }
+  .add-btn{
+    aspect-ratio:1/1; border-radius:12px;
+    border:1.5px dashed var(--ribbon); background:#FFFAFC;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:2px; cursor:pointer; font-family:inherit;
+  }
+  .add-btn .plus{ font-size:18px; color:var(--ribbon); line-height:1; }
+  .add-btn .num{ font-size:9.5px; color:var(--sub); }
+  .hint{ font-size:11px; color:var(--sub); margin-top:10px; line-height:1.6; }
+
+  /* 피드 미디어 */
+  .p-media{ display:grid; gap:5px; margin-top:11px; }
+  .p-media.n1{ grid-template-columns:1fr; }
+  .p-media.n2{ grid-template-columns:1fr 1fr; }
+  .p-media.n3, .p-media.n4{ grid-template-columns:1fr 1fr; }
+  .p-media .m{
+    border-radius:12px; overflow:hidden; position:relative;
+    background:linear-gradient(145deg,#FBE7EE,#F5D3DF);
+    aspect-ratio:1/1;
+  }
+  .p-media.n1 .m{ aspect-ratio:4/3; }
+  .p-media .m img, .p-media .m video{ width:100%; height:100%; object-fit:cover; display:block; }
+  .p-media .more{
+    position:absolute; inset:0; background:rgba(58,44,48,.5);
+    color:#fff; font-size:17px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .p-media .play{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:34px; height:34px; border-radius:50%;
+    background:rgba(58,44,48,.55); color:#fff; font-size:13px;
+    display:flex; align-items:center; justify-content:center; padding-left:3px;
+    pointer-events:none;
+  }
+
   /* ============ 내 정보 ============ */
   .me-wrap{ padding:30px 20px; text-align:center; }
   .me-av{
@@ -464,6 +536,26 @@
         <input class="title-input" id="wTitle" placeholder="제목을 입력해주세요" maxlength="60">
         <textarea class="content-input" id="wContent" placeholder="무슨 이야기를 나누고 싶나요?" maxlength="2000"></textarea>
         <div class="w-len"><span id="wLen">0</span> / 2000</div>
+
+        <div class="img-head">
+          <span class="img-head-left">🖼️ 사진 · 동영상</span>
+          <span>
+            <span class="counter" id="imgCount">0 / 10</span>
+            <span class="counter vid" id="vidCount">🎬 0 / 1</span>
+          </span>
+        </div>
+        <div class="img-grid" id="mediaGrid">
+          <button class="add-btn" id="addMedia">
+            <span class="plus">+</span>
+            <span class="num">10장 더</span>
+          </button>
+        </div>
+        <input type="file" id="filePick" accept="image/*,video/*" multiple hidden>
+        <p class="hint">
+          · 사진은 최대 <b>10장</b> (장당 20MB 이하)<br>
+          · 동영상은 <b>1개</b>까지 (50MB 이하)<br>
+          · 첫 번째 파일이 <b>대표 이미지</b>로 피드에 보여요
+        </p>
       </div>
     </div>
   </div>
@@ -749,7 +841,7 @@ async function loadFeed(){
   const targets = boardFilter ? [boardFilter] : zoneBoards;
 
   let q = db.from('posts')
-    .select('*, author:profiles!posts_author_id_fkey(nickname, handle, avatar_emoji), boards(label, zone)')
+    .select('*, author:profiles!posts_author_id_fkey(nickname, handle, avatar_emoji), boards(label, zone), post_media(url, kind, sort_order)')
     .in('board_id', targets)
     .order('created_at', { ascending:false })
     .limit(50);
@@ -774,6 +866,24 @@ async function loadFeed(){
   data.forEach(p => feed.appendChild(postCard(p)));
 }
 
+function mediaHtml(list){
+  if(!list || !list.length) return '';
+  const items = [...list].sort((a,b) => a.sort_order - b.sort_order);
+  const show = items.slice(0, 4);
+  const extra = items.length - show.length;
+
+  const cells = show.map((m, i) => {
+    const inner = m.kind === 'video'
+      ? `<video src="${esc(m.url)}" muted playsinline preload="metadata"></video><span class="play">▶</span>`
+      : `<img src="${esc(m.url)}" loading="lazy" alt="">`;
+    const more = (i === show.length - 1 && extra > 0)
+      ? `<div class="more">+${extra}</div>` : '';
+    return `<div class="m">${inner}${more}</div>`;
+  }).join('');
+
+  return `<div class="p-media n${show.length}">${cells}</div>`;
+}
+
 function postCard(p){
   const el = document.createElement('div');
   el.className = 'post' + (p.boards?.zone === 'info' ? ' info' : '');
@@ -791,6 +901,7 @@ function postCard(p){
     </div>
     <div class="p-title">${esc(p.title)}</div>
     <p class="p-text">${esc(p.content)}</p>
+    ${mediaHtml(p.post_media)}
     <div class="p-acts">
       <button class="act like${liked ? ' liked' : ''}">🎀 <b>${p.like_count || 0}</b></button>
     </div>`;
@@ -868,11 +979,93 @@ function buildWriteChips(){
   });
 }
 
+const MAX_IMG = 10, MAX_VID = 1;
+const MAX_IMG_SIZE = 20 * 1024 * 1024;
+const MAX_VID_SIZE = 50 * 1024 * 1024;
+let picked = [];   // { file, kind, url(objectURL), uploaded }
+
 function openWrite(){
   writeBoard = null;
   $('wTitle').value = ''; $('wContent').value = ''; $('wLen').textContent = '0';
   $('wBoards').querySelectorAll('.chip').forEach(x => x.classList.remove('on'));
+  picked.forEach(p => URL.revokeObjectURL(p.url));
+  picked = [];
+  renderMedia();
   screen('write');
+}
+
+function renderMedia(){
+  const grid = $('mediaGrid');
+  const addBtn = $('addMedia');
+  grid.querySelectorAll('.thumb').forEach(t => t.remove());
+
+  picked.forEach((p, i) => {
+    const d = document.createElement('div');
+    d.className = 'thumb' + (i === 0 ? ' main' : '');
+    d.innerHTML = (p.kind === 'video'
+        ? `<video src="${p.url}" muted playsinline></video>`
+        : `<img src="${p.url}" alt="">`)
+      + '<span class="del">×</span>';
+    d.querySelector('.del').addEventListener('click', () => {
+      URL.revokeObjectURL(p.url);
+      picked.splice(i, 1);
+      renderMedia();
+    });
+    grid.insertBefore(d, addBtn);
+  });
+
+  const imgs = picked.filter(p => p.kind === 'image').length;
+  const vids = picked.filter(p => p.kind === 'video').length;
+  $('imgCount').textContent = imgs + ' / ' + MAX_IMG;
+  $('imgCount').classList.toggle('full', imgs >= MAX_IMG);
+  $('vidCount').textContent = '🎬 ' + vids + ' / ' + MAX_VID;
+  addBtn.style.display = (imgs >= MAX_IMG && vids >= MAX_VID) ? 'none' : 'flex';
+  addBtn.querySelector('.num').textContent = (MAX_IMG - imgs) + '장 더';
+}
+
+$('addMedia').addEventListener('click', () => $('filePick').click());
+
+$('filePick').addEventListener('change', e => {
+  const files = [...e.target.files];
+  for(const f of files){
+    const isVid = f.type.startsWith('video');
+    const imgs = picked.filter(p => p.kind === 'image').length;
+    const vids = picked.filter(p => p.kind === 'video').length;
+
+    if(isVid){
+      if(vids >= MAX_VID){ toast('동영상은 1개까지만 올릴 수 있어요', 'bad'); continue; }
+      if(f.size > MAX_VID_SIZE){ toast('동영상은 50MB 이하만 가능해요', 'bad'); continue; }
+    } else {
+      if(imgs >= MAX_IMG){ toast('사진은 10장까지만 올릴 수 있어요', 'bad'); continue; }
+      if(f.size > MAX_IMG_SIZE){ toast('사진은 20MB 이하만 가능해요', 'bad'); continue; }
+    }
+    picked.push({ file: f, kind: isVid ? 'video' : 'image', url: URL.createObjectURL(f) });
+  }
+  e.target.value = '';
+  renderMedia();
+});
+
+/* 업로드 */
+async function uploadMedia(postId){
+  for(let i = 0; i < picked.length; i++){
+    const p = picked[i];
+    const ext = (p.file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `${me.id}/${postId}_${Date.now()}_${i}.${ext}`;
+
+    const { error: upErr } = await db.storage.from('posts')
+      .upload(path, p.file, { cacheControl: '3600', upsert: false });
+    if(upErr) throw upErr;
+
+    const { data: pub } = db.storage.from('posts').getPublicUrl(path);
+
+    const { error: rowErr } = await db.from('post_media').insert({
+      post_id: postId,
+      url: pub.publicUrl,
+      kind: p.kind,
+      sort_order: i
+    });
+    if(rowErr) throw rowErr;
+  }
 }
 
 $('wContent').addEventListener('input', () => {
@@ -892,12 +1085,28 @@ $('wSubmit').addEventListener('click', async () => {
   const btn = $('wSubmit');
   btn.disabled = true; btn.textContent = '올리는 중';
 
-  const { error } = await db.from('posts').insert({
+  const { data: post, error } = await db.from('posts').insert({
     author_id: me.id, board_id: writeBoard, title, content
-  });
+  }).select('id').single();
 
+  if(error){
+    btn.disabled = false; btn.textContent = '올리기';
+    return toast(ko(error.message), 'bad');
+  }
+
+  if(picked.length){
+    btn.textContent = '사진 올리는 중';
+    try{
+      await uploadMedia(post.id);
+    }catch(e){
+      btn.disabled = false; btn.textContent = '올리기';
+      return toast('사진 업로드에 실패했어요: ' + ko(e.message), 'bad');
+    }
+  }
+
+  picked.forEach(p => URL.revokeObjectURL(p.url));
+  picked = [];
   btn.disabled = false; btn.textContent = '올리기';
-  if(error) return toast(ko(error.message), 'bad');
 
   const b = boards.find(x => x.id === writeBoard);
   zone = b.zone; boardFilter = null;
