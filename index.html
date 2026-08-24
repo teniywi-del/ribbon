@@ -669,6 +669,81 @@
   .av-side button.gray{ border-color:var(--line); color:var(--sub); }
   .av-note{ font-size:11px; color:var(--sub); margin:8px 0 4px; }
 
+  /* ============ DM ============ */
+  .dm-list{ padding:6px 0 18px; }
+  .dm-row{
+    display:flex; align-items:center; gap:12px;
+    padding:13px 18px; cursor:pointer;
+  }
+  .dm-row:active{ background:#FFFAFC; }
+  .dm-main{ flex:1; min-width:0; }
+  .dm-top{ display:flex; align-items:center; gap:6px; }
+  .dm-name{ font-size:14px; font-weight:700; }
+  .dm-time{ font-size:10.5px; color:var(--sub); margin-left:auto; flex-shrink:0; }
+  .dm-last{
+    font-size:12.5px; color:var(--sub); margin-top:3px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .dm-divider{
+    height:1px; margin:0 18px;
+    background:repeating-linear-gradient(to right,var(--line) 0 5px,transparent 5px 10px);
+  }
+
+  /* 대화방 */
+  .chat-head{
+    display:flex; align-items:center; gap:11px;
+    padding:12px 18px; border-bottom:1px solid var(--line); flex-shrink:0;
+  }
+  .chat-name{ font-size:14.5px; font-weight:700; }
+  .chat-scroll{
+    flex:1; overflow-y:auto; padding:16px 16px 10px;
+    background:
+      radial-gradient(circle at 88% 10%, rgba(236,147,174,0.05), transparent 42%),
+      #FFFDFE;
+  }
+  .day-chip{
+    text-align:center; margin:6px 0 16px;
+  }
+  .day-chip span{
+    font-size:11px; color:var(--sub);
+    background:#F7EBEF; padding:5px 14px; border-radius:999px;
+  }
+  .row{ display:flex; flex-direction:column; margin-bottom:4px; }
+  .row.mine{ align-items:flex-end; }
+  .row.theirs{ align-items:flex-start; }
+  .row.has-cloud{ margin-top:30px; }
+
+  .bubble{
+    max-width:76%; padding:11px 15px;
+    font-size:14px; line-height:1.6;
+    word-break:break-word; white-space:pre-wrap;
+    position:relative;
+  }
+  .row.theirs .bubble{
+    background:#FBF0F3; color:var(--text);
+    border-radius:4px 16px 16px 16px;
+  }
+  .row.mine .bubble{
+    background:linear-gradient(180deg,var(--ribbon),var(--ribbon-deep));
+    color:#fff; border-radius:16px 4px 16px 16px;
+  }
+
+  /* 토끼 귀 */
+  .bubble.cloud{ border-radius:20px; overflow:visible; }
+  .bubble.cloud::before, .bubble.cloud::after{
+    content:""; position:absolute; top:-27px;
+    width:13px; height:32px;
+    border-radius:50% 50% 45% 45% / 60% 60% 40% 40%;
+  }
+  .bubble.cloud::before{ transform:rotate(-14deg); }
+  .bubble.cloud::after{ transform:rotate(14deg); }
+  .row.theirs .bubble.cloud::before{ left:18px; background:#FBF0F3; }
+  .row.theirs .bubble.cloud::after{ left:38px; background:#FBF0F3; }
+  .row.mine .bubble.cloud::before{ right:38px; background:var(--ribbon); }
+  .row.mine .bubble.cloud::after{ right:18px; background:var(--ribbon); }
+
+  .row-time{ font-size:10px; color:var(--sub); margin:3px 4px 8px; }
+
   /* ============ 내 정보 ============ */
   .me-wrap{ padding:30px 20px; text-align:center; }
   .me-av{
@@ -805,6 +880,7 @@
     <div class="nav">
       <button class="nav-item on" data-go="home"><span class="ic">🏠</span>홈</button>
       <button class="nav-item" data-go="write"><span class="ic">✏️</span>글쓰기</button>
+      <button class="nav-item" data-go="dm"><span class="ic">✉️</span>쪽지</button>
       <button class="nav-item" data-go="me"><span class="ic">🌷</span>내 프로필</button>
     </div>
   </div>
@@ -875,6 +951,37 @@
     </div>
   </div>
 
+  <!-- ==================== DM 목록 ==================== -->
+  <div class="screen" id="dmScreen">
+    <div class="d-head">
+      <div class="d-title" style="font-size:19px">쪽지함</div>
+      <button class="d-more" id="dmRefresh">↻</button>
+    </div>
+    <div class="scroll">
+      <div class="dm-list" id="dmList"></div>
+    </div>
+    <div class="nav">
+      <button class="nav-item" data-go="home"><span class="ic">🏠</span>홈</button>
+      <button class="nav-item" data-go="write"><span class="ic">✏️</span>글쓰기</button>
+      <button class="nav-item on" data-go="dm"><span class="ic">✉️</span>쪽지</button>
+      <button class="nav-item" data-go="me"><span class="ic">🌷</span>내 프로필</button>
+    </div>
+  </div>
+
+  <!-- ==================== 대화방 ==================== -->
+  <div class="screen" id="chatScreen">
+    <div class="chat-head">
+      <button class="d-back" id="chatBack">←</button>
+      <div class="avatar sm" id="chatAv">🌷</div>
+      <div class="chat-name" id="chatName">-</div>
+    </div>
+    <div class="chat-scroll" id="chatScroll"></div>
+    <div class="c-input">
+      <input class="c-field" id="mField" placeholder="메시지를 입력해주세요 🎀" maxlength="1000">
+      <button class="c-send" id="mSend">➤</button>
+    </div>
+  </div>
+
   <!-- ==================== 프로필 ==================== -->
   <div class="screen" id="profileScreen">
     <div class="d-head">
@@ -919,6 +1026,7 @@
     <div class="nav">
       <button class="nav-item" data-go="home"><span class="ic">🏠</span>홈</button>
       <button class="nav-item" data-go="write"><span class="ic">✏️</span>글쓰기</button>
+      <button class="nav-item" data-go="dm"><span class="ic">✉️</span>쪽지</button>
       <button class="nav-item on" data-go="me"><span class="ic">🌷</span>내 프로필</button>
     </div>
   </div>
@@ -1014,6 +1122,7 @@ function toast(text, type){
 }
 
 function screen(name){
+  if(name !== 'chat' && typeof chatTimer !== 'undefined') clearInterval(chatTimer);
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
   $(name + 'Screen').classList.add('on');
 }
@@ -1854,7 +1963,7 @@ async function openProfile(userId){
       `<button class="pf-btn${isFol ? '' : ' fill'}" id="pfFollow">${isFol ? '팔로잉' : '팔로우'}</button>` +
       '<button class="pf-btn" id="pfSoon">메시지</button>';
     $('pfFollow').addEventListener('click', () => toggleFollow(u.id, $('pfFollow')));
-    $('pfSoon').addEventListener('click', () => toast('DM은 곧 만들 거예요 🎀'));
+    $('pfSoon').addEventListener('click', () => startChat(u));
   }
 
   loadProfileStats(u.id);
@@ -2071,12 +2180,199 @@ $('edSave').addEventListener('click', async () => {
   openProfile(me.id);
 });
 
+/* ================= DM ================= */
+let curConv = null;
+let chatTimer = null;
+
+async function openDM(){
+  screen('dm');
+  const box = $('dmList');
+  box.innerHTML = '<div class="loading">불러오는 중...</div>';
+
+  const { data, error } = await db.from('conversations')
+    .select('*, a:profiles!conversations_user_a_fkey(id, nickname, avatar_emoji, avatar_url), b:profiles!conversations_user_b_fkey(id, nickname, avatar_emoji, avatar_url)')
+    .or(`user_a.eq.${me.id},user_b.eq.${me.id}`)
+    .order('last_message_at', { ascending:false });
+
+  if(error){ box.innerHTML = '<div class="loading">' + esc(ko(error.message)) + '</div>'; return; }
+
+  if(!data || !data.length){
+    box.innerHTML = `
+      <div class="empty">
+        <span class="e">✉️</span>
+        <h3>아직 쪽지가 없어요</h3>
+        <p>프로필에서 <b>메시지</b>를 눌러<br>대화를 시작해보세요 🎀</p>
+      </div>`;
+    return;
+  }
+
+  box.innerHTML = '';
+  data.forEach((c, i) => {
+    const other = c.user_a === me.id ? c.b : c.a;
+    const row = document.createElement('div');
+    row.className = 'dm-row';
+    row.innerHTML = `
+      <div class="avatar">${avatarInner(other)}</div>
+      <div class="dm-main">
+        <div class="dm-top">
+          <span class="dm-name">${esc(other?.nickname || '알 수 없음')}</span>
+          <span class="dm-time">${c.last_message_at ? timeAgo(c.last_message_at) : ''}</span>
+        </div>
+        <div class="dm-last">${esc(c.last_message || '대화를 시작해보세요')}</div>
+      </div>`;
+    row.addEventListener('click', () => openChat(c.id, other));
+    box.appendChild(row);
+
+    if(i < data.length - 1){
+      const d = document.createElement('div');
+      d.className = 'dm-divider';
+      box.appendChild(d);
+    }
+  });
+}
+
+$('dmRefresh').addEventListener('click', openDM);
+
+/* 대화방 열기 (없으면 만들기) */
+async function startChat(otherUser){
+  if(!me || otherUser.id === me.id) return;
+
+  const a = me.id < otherUser.id ? me.id : otherUser.id;
+  const b = me.id < otherUser.id ? otherUser.id : me.id;
+
+  let { data: conv } = await db.from('conversations')
+    .select('id').eq('user_a', a).eq('user_b', b).maybeSingle();
+
+  if(!conv){
+    const { data: made, error } = await db.from('conversations')
+      .insert({ user_a: a, user_b: b }).select('id').single();
+    if(error) return toast(ko(error.message), 'bad');
+    conv = made;
+  }
+  openChat(conv.id, otherUser);
+}
+
+async function openChat(convId, other){
+  curConv = { id: convId, other };
+  screen('chat');
+  $('chatAv').innerHTML = avatarInner(other);
+  $('chatName').textContent = other?.nickname || '대화';
+  $('chatScroll').innerHTML = '<div class="loading">불러오는 중...</div>';
+  await loadMessages(true);
+
+  clearInterval(chatTimer);
+  chatTimer = setInterval(() => loadMessages(false), 4000);
+}
+
+$('chatBack').addEventListener('click', () => {
+  clearInterval(chatTimer);
+  curConv = null;
+  openDM();
+});
+
+let lastMsgCount = 0;
+
+async function loadMessages(force){
+  if(!curConv) return;
+  const { data, error } = await db.from('messages')
+    .select('*')
+    .eq('conversation_id', curConv.id)
+    .order('created_at', { ascending:true })
+    .limit(200);
+
+  if(error){ if(force) $('chatScroll').innerHTML = '<div class="loading">' + esc(ko(error.message)) + '</div>'; return; }
+
+  const list = data || [];
+  if(!force && list.length === lastMsgCount) return;
+  lastMsgCount = list.length;
+
+  const box = $('chatScroll');
+  box.innerHTML = '';
+
+  if(!list.length){
+    box.innerHTML = `<div class="c-empty">첫 메시지를 보내보세요 🎀</div>`;
+    return;
+  }
+
+  let lastDay = '';
+  let lastSender = null;
+  let lastTime = null;
+
+  list.forEach((m, i) => {
+    const d = new Date(m.created_at);
+    const day = d.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' });
+    if(day !== lastDay){
+      const chip = document.createElement('div');
+      chip.className = 'day-chip';
+      chip.innerHTML = `<span>${isToday(d) ? '오늘' : day}</span>`;
+      box.appendChild(chip);
+      lastDay = day; lastSender = null;
+    }
+
+    const mine = m.sender_id === me.id;
+    const newGroup = m.sender_id !== lastSender;
+
+    const row = document.createElement('div');
+    row.className = 'row ' + (mine ? 'mine' : 'theirs') + (newGroup ? ' has-cloud' : '');
+    row.innerHTML = `<div class="bubble${newGroup ? ' cloud' : ''}">${esc(m.content)}</div>`;
+
+    // 같은 사람이 연속으로 보낸 마지막 메시지에만 시간
+    const next = list[i + 1];
+    const showTime = !next || next.sender_id !== m.sender_id ||
+      new Date(next.created_at).getMinutes() !== d.getMinutes();
+    if(showTime){
+      const t = document.createElement('div');
+      t.className = 'row-time';
+      t.textContent = d.toLocaleTimeString('ko-KR', { hour:'numeric', minute:'2-digit' });
+      row.appendChild(t);
+    }
+
+    box.appendChild(row);
+    lastSender = m.sender_id;
+  });
+
+  box.scrollTop = box.scrollHeight;
+}
+
+function isToday(d){
+  const n = new Date();
+  return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate();
+}
+
+$('mSend').addEventListener('click', sendMessage);
+$('mField').addEventListener('keydown', e => { if(e.key === 'Enter') sendMessage(); });
+
+async function sendMessage(){
+  const text = $('mField').value.trim();
+  if(!text || !curConv) return;
+
+  const btn = $('mSend');
+  btn.disabled = true;
+
+  const { error } = await db.from('messages').insert({
+    conversation_id: curConv.id,
+    sender_id: me.id,
+    content: text
+  });
+
+  btn.disabled = false;
+  if(error) return toast(ko(error.message), 'bad');
+
+  await db.from('conversations')
+    .update({ last_message: text, last_message_at: new Date().toISOString() })
+    .eq('id', curConv.id);
+
+  $('mField').value = '';
+  await loadMessages(true);
+}
+
 /* ================= 하단 네비 ================= */
 document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', () => {
     const go = item.dataset.go;
     if(go === 'home'){ screen('home'); loadFeed(); }
     else if(go === 'write') openWrite();
+    else if(go === 'dm') openDM();
     else if(go === 'me') openProfile(me.id);
   });
 });
