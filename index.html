@@ -744,7 +744,7 @@ async function loadFeed(){
   const targets = boardFilter ? [boardFilter] : zoneBoards;
 
   let q = db.from('posts')
-    .select('*, profiles(nickname, handle, avatar_emoji), boards(label, zone)')
+    .select('*, author:profiles!posts_author_id_fkey(nickname, handle, avatar_emoji), boards(label, zone)')
     .in('board_id', targets)
     .order('created_at', { ascending:false })
     .limit(50);
@@ -777,9 +777,9 @@ function postCard(p){
 
   el.innerHTML = `
     <div class="p-head">
-      <div class="avatar">${esc(p.profiles?.avatar_emoji || '🌷')}</div>
+      <div class="avatar">${esc(p.author?.avatar_emoji || '🌷')}</div>
       <div>
-        <div class="p-name">${esc(p.profiles?.nickname || '알 수 없음')}</div>
+        <div class="p-name">${esc(p.author?.nickname || '알 수 없음')}</div>
         <div class="p-meta">${esc(p.boards?.label || '')} · ${timeAgo(p.created_at)}</div>
       </div>
       ${mine ? '<button class="p-del">⋯</button>' : ''}
