@@ -1729,12 +1729,11 @@ async function toggleLike(postId, btn){
   let error;
   if(wasLiked){
     likedSet.delete(postId);
-    ({ error } = await db.from('likes').delete()
-      .eq('user_id', me.id).eq('post_id', postId));
+    ({ error } = await db.from('likes').delete().eq('user_id', me.id).eq('post_id', postId));
   } else {
     likedSet.add(postId);
     ({ error } = await db.from('likes')
-      .insert({ user_id: me.id, post_id: postId, comment_id: 0 }));
+      .insert({ user_id: me.id, post_id: postId }));
   }
 
   if(error){
@@ -1999,7 +1998,7 @@ async function toggleLikeDetail(postId, btn){
     ({ error } = await db.from('likes').delete().eq('user_id', me.id).eq('post_id', postId));
   } else {
     likedSet.add(postId);
-    ({ error } = await db.from('likes').insert({ user_id: me.id, post_id: postId, comment_id: 0 }));
+    ({ error } = await db.from('likes').insert({ user_id: me.id, post_id: postId }));
   }
 
   if(error){
