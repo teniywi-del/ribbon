@@ -381,6 +381,139 @@
     pointer-events:none;
   }
 
+  /* ============ 게시글 상세 ============ */
+  .d-head{
+    display:flex; align-items:center; gap:12px;
+    padding:14px 18px; border-bottom:1px solid var(--line); flex-shrink:0;
+  }
+  .d-back{ font-size:18px; color:var(--ribbon-deep); background:none; border:none; cursor:pointer; }
+  .d-title{ font-family:'Gowun Batang',serif; font-size:15px; letter-spacing:1px; flex:1; }
+  .d-more{ background:none; border:none; color:var(--sub); font-size:17px; cursor:pointer; }
+
+  .d-body{ padding:18px; }
+  .d-tag{
+    display:inline-block; font-size:11px; font-weight:700;
+    color:var(--ribbon-deep); background:#FCEDF1;
+    padding:4px 11px; border-radius:999px; margin-bottom:12px;
+  }
+  .d-tag.g{ color:var(--gold-deep); background:#FBF0DC; }
+  .d-ptitle{ font-size:18px; font-weight:700; line-height:1.45; margin-bottom:14px; }
+  .d-author{ display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+  .d-aname{ font-size:14px; font-weight:700; }
+  .d-atime{ font-size:11.5px; color:var(--sub); }
+  .d-content{
+    font-size:14.5px; line-height:1.85;
+    white-space:pre-wrap; word-break:break-word; margin-bottom:14px;
+  }
+  .d-media{ display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+  .d-media img, .d-media video{
+    width:100%; border-radius:14px; display:block; background:#FBE7EE;
+  }
+  .d-acts{
+    display:flex; align-items:center; gap:8px;
+    padding-top:14px; border-top:1px dashed var(--line);
+  }
+  .d-act{
+    display:flex; align-items:center; gap:6px;
+    font-family:inherit; font-size:13px; color:var(--sub);
+    background:#fff; border:1px solid var(--line);
+    padding:8px 14px; border-radius:999px; cursor:pointer;
+  }
+  .d-act.liked{
+    background:linear-gradient(180deg,#FCE6EC,#F9D7E1);
+    border-color:var(--ribbon); color:var(--ribbon-deep); font-weight:700;
+  }
+
+  /* 댓글 */
+  .c-head{
+    display:flex; align-items:center; gap:8px;
+    padding:16px 18px 10px; background:#FFFAFC; border-top:1px solid var(--line);
+  }
+  .c-head-t{ font-family:'Gowun Batang',serif; font-size:14px; letter-spacing:.5px; }
+  .c-count{
+    font-size:11.5px; font-weight:700; color:var(--ribbon-deep);
+    background:#FCEDF1; padding:3px 9px; border-radius:999px;
+  }
+  .comments{ background:#FFFAFC; padding:0 18px 18px; min-height:120px; }
+
+  .comment{ display:flex; gap:10px; padding:14px 0; border-bottom:1px dashed var(--line); }
+  .comment:last-child{ border-bottom:none; }
+  .avatar.sm{ width:32px; height:32px; font-size:14px; border-width:1.5px; }
+  .avatar.xs{ width:27px; height:27px; font-size:12px; border-width:1.5px; }
+  .c-main{ flex:1; min-width:0; }
+  .c-top{ display:flex; align-items:center; gap:6px; margin-bottom:5px; }
+  .c-name{ font-size:13px; font-weight:700; }
+  .c-badge{
+    font-size:9px; font-weight:700; color:#fff;
+    background:linear-gradient(180deg,var(--ribbon),var(--ribbon-deep));
+    padding:2px 6px; border-radius:5px;
+  }
+  .c-time{ font-size:11px; color:var(--sub); margin-left:auto; }
+  .c-text{ font-size:13.5px; line-height:1.7; white-space:pre-wrap; word-break:break-word; }
+  .c-acts{ display:flex; gap:14px; margin-top:7px; }
+  .c-act{
+    font-family:inherit; font-size:11.5px; color:var(--sub);
+    background:none; border:none; cursor:pointer;
+  }
+  .c-act.del{ color:#C99; }
+  .replies{ margin-top:12px; padding-left:12px; border-left:2px solid #F7DDE6; }
+  .reply{ display:flex; gap:8px; padding:9px 0; }
+  .reply .c-name{ font-size:12.5px; }
+  .reply .c-text{ font-size:13px; }
+  .c-empty{ text-align:center; padding:34px 0; color:var(--sub); font-size:12.5px; line-height:1.8; }
+
+  /* 댓글 입력 */
+  .c-input{
+    display:flex; align-items:center; gap:8px;
+    padding:11px 14px; border-top:1px solid var(--line);
+    background:#fff; flex-shrink:0;
+  }
+  .c-replying{
+    display:none; align-items:center; gap:8px;
+    padding:8px 16px; background:#FCEDF1;
+    font-size:11.5px; color:var(--ribbon-deep); flex-shrink:0;
+  }
+  .c-replying.on{ display:flex; }
+  .c-replying button{ margin-left:auto; background:none; border:none; color:var(--sub); font-size:13px; cursor:pointer; }
+  .c-field{
+    flex:1; border:1px solid var(--line); background:#FFFAFC;
+    border-radius:999px; padding:11px 16px;
+    font-family:inherit; font-size:16px; color:var(--text); outline:none;
+  }
+  .c-field::placeholder{ color:#D9BFC7; }
+  .c-send{
+    width:40px; height:40px; border-radius:50%; border:none;
+    background:linear-gradient(180deg,var(--ribbon),var(--ribbon-deep));
+    color:#fff; font-size:15px; cursor:pointer;
+    box-shadow:0 4px 10px rgba(217,113,143,0.35); flex-shrink:0;
+  }
+  .c-send:disabled{ opacity:.5; }
+
+  /* 사진 크게 보기 */
+  .lightbox{
+    position:fixed; inset:0; z-index:200;
+    background:rgba(28,20,23,.94);
+    display:none; align-items:center; justify-content:center;
+  }
+  .lightbox.on{ display:flex; }
+  .lightbox img, .lightbox video{ max-width:100%; max-height:82vh; object-fit:contain; }
+  .lb-close{
+    position:absolute; top:16px; right:18px;
+    width:38px; height:38px; border-radius:50%;
+    background:rgba(255,255,255,.15); color:#fff;
+    border:none; font-size:17px; cursor:pointer;
+  }
+  .lb-nav{
+    position:absolute; bottom:24px; left:50%; transform:translateX(-50%);
+    display:flex; align-items:center; gap:18px;
+    color:#fff; font-size:13px;
+  }
+  .lb-nav button{
+    width:38px; height:38px; border-radius:50%;
+    background:rgba(255,255,255,.15); color:#fff;
+    border:none; font-size:15px; cursor:pointer;
+  }
+
   /* ============ 내 정보 ============ */
   .me-wrap{ padding:30px 20px; text-align:center; }
   .me-av{
@@ -560,6 +693,33 @@
     </div>
   </div>
 
+  <!-- ==================== 게시글 상세 ==================== -->
+  <div class="screen" id="detailScreen">
+    <div class="d-head">
+      <button class="d-back" id="dBack">←</button>
+      <div class="d-title" id="dBoard">글</div>
+      <button class="d-more" id="dDelete" style="display:none">🗑</button>
+    </div>
+
+    <div class="scroll" id="dScroll">
+      <div class="d-body" id="dBody"></div>
+      <div class="c-head">
+        <span class="c-head-t">댓글</span>
+        <span class="c-count" id="cCount">0</span>
+      </div>
+      <div class="comments" id="comments"></div>
+    </div>
+
+    <div class="c-replying" id="cReplying">
+      <span id="cReplyTo"></span>
+      <button id="cReplyCancel">취소</button>
+    </div>
+    <div class="c-input">
+      <input class="c-field" id="cField" placeholder="따뜻한 댓글을 남겨주세요 🎀" maxlength="500">
+      <button class="c-send" id="cSend">➤</button>
+    </div>
+  </div>
+
   <!-- ==================== 내 정보 ==================== -->
   <div class="screen" id="meScreen">
     <div class="scroll">
@@ -582,6 +742,16 @@
     </div>
   </div>
 
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lb-close" id="lbClose">✕</button>
+  <div id="lbSlot"></div>
+  <div class="lb-nav">
+    <button id="lbPrev">‹</button>
+    <span id="lbNum">1 / 1</span>
+    <button id="lbNext">›</button>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -904,12 +1074,15 @@ function postCard(p){
     ${mediaHtml(p.post_media)}
     <div class="p-acts">
       <button class="act like${liked ? ' liked' : ''}">🎀 <b>${p.like_count || 0}</b></button>
+      <span class="act">💬 ${p.comment_count || 0}</span>
     </div>`;
 
   el.querySelector('.like').addEventListener('click', e => {
     e.stopPropagation();
     toggleLike(p.id, el.querySelector('.like'));
   });
+
+  el.addEventListener('click', () => openDetail(p.id));
 
   if(mine){
     el.querySelector('.p-del').addEventListener('click', async e => {
@@ -1117,6 +1290,251 @@ $('wSubmit').addEventListener('click', async () => {
   toast('글을 올렸어요 🎀', 'good');
   screen('home');
   loadFeed();
+});
+
+/* ================= 게시글 상세 ================= */
+let curPost = null;
+let curMedia = [];
+let replyTo = null;
+
+async function openDetail(postId){
+  screen('detail');
+  $('dBody').innerHTML = '<div class="loading">불러오는 중...</div>';
+  $('comments').innerHTML = '';
+  $('cCount').textContent = '0';
+  cancelReply();
+
+  const { data: p, error } = await db.from('posts')
+    .select('*, author:profiles!posts_author_id_fkey(nickname, handle, avatar_emoji), boards(label, zone), post_media(url, kind, sort_order)')
+    .eq('id', postId).single();
+
+  if(error){ $('dBody').innerHTML = '<div class="loading">' + esc(ko(error.message)) + '</div>'; return; }
+
+  curPost = p;
+  curMedia = [...(p.post_media || [])].sort((a,b) => a.sort_order - b.sort_order);
+  const isInfo = p.boards?.zone === 'info';
+  const liked = likedSet.has(p.id);
+  const mine = me && p.author_id === me.id;
+
+  $('dBoard').textContent = p.boards?.label || '글';
+  $('dDelete').style.display = mine ? 'block' : 'none';
+
+  $('dBody').innerHTML = `
+    <span class="d-tag${isInfo ? ' g' : ''}">${esc(p.boards?.label || '')}</span>
+    <h1 class="d-ptitle">${esc(p.title)}</h1>
+    <div class="d-author">
+      <div class="avatar">${esc(p.author?.avatar_emoji || '🌷')}</div>
+      <div>
+        <div class="d-aname">${esc(p.author?.nickname || '알 수 없음')}</div>
+        <div class="d-atime">${timeAgo(p.created_at)}</div>
+      </div>
+    </div>
+    <div class="d-content">${esc(p.content)}</div>
+    <div class="d-media" id="dMedia"></div>
+    <div class="d-acts">
+      <button class="d-act like${liked ? ' liked' : ''}">🎀 <span>${p.like_count || 0}</span></button>
+    </div>`;
+
+  const mediaWrap = $('dMedia');
+  curMedia.forEach((m, i) => {
+    const node = m.kind === 'video'
+      ? Object.assign(document.createElement('video'), { src: m.url, controls: true, playsInline: true })
+      : Object.assign(document.createElement('img'), { src: m.url, loading: 'lazy', alt: '' });
+    if(m.kind !== 'video') node.addEventListener('click', () => openLightbox(i));
+    mediaWrap.appendChild(node);
+  });
+
+  const likeBtn = $('dBody').querySelector('.like');
+  likeBtn.addEventListener('click', () => toggleLikeDetail(p.id, likeBtn));
+
+  $('dScroll').scrollTop = 0;
+  loadComments(p.id);
+}
+
+$('dBack').addEventListener('click', () => { screen('home'); loadFeed(); });
+
+$('dDelete').addEventListener('click', async () => {
+  if(!curPost) return;
+  if(!confirm('이 글을 삭제할까요?')) return;
+  const { error } = await db.from('posts').delete().eq('id', curPost.id);
+  if(error) return toast(ko(error.message), 'bad');
+  toast('글을 삭제했어요');
+  screen('home'); loadFeed();
+});
+
+async function toggleLikeDetail(postId, btn){
+  if(!me) return;
+  const span = btn.querySelector('span');
+  const wasLiked = likedSet.has(postId);
+  const n = parseInt(span.textContent) || 0;
+
+  btn.classList.toggle('liked', !wasLiked);
+  span.textContent = Math.max(0, n + (wasLiked ? -1 : 1));
+
+  let error;
+  if(wasLiked){
+    likedSet.delete(postId);
+    ({ error } = await db.from('likes').delete().eq('user_id', me.id).eq('post_id', postId));
+  } else {
+    likedSet.add(postId);
+    ({ error } = await db.from('likes').insert({ user_id: me.id, post_id: postId, comment_id: 0 }));
+  }
+
+  if(error){
+    btn.classList.toggle('liked', wasLiked);
+    span.textContent = n;
+    if(wasLiked) likedSet.add(postId); else likedSet.delete(postId);
+    return toast(ko(error.message), 'bad');
+  }
+  await db.from('posts').update({ like_count: parseInt(span.textContent) || 0 }).eq('id', postId);
+}
+
+/* ================= 댓글 ================= */
+async function loadComments(postId){
+  const box = $('comments');
+  box.innerHTML = '<div class="loading">불러오는 중...</div>';
+
+  const { data, error } = await db.from('comments')
+    .select('*, author:profiles!comments_author_id_fkey(nickname, avatar_emoji)')
+    .eq('post_id', postId)
+    .order('created_at', { ascending:true });
+
+  if(error){ box.innerHTML = '<div class="c-empty">' + esc(ko(error.message)) + '</div>'; return; }
+
+  const list = data || [];
+  $('cCount').textContent = list.length;
+
+  if(!list.length){
+    box.innerHTML = '<div class="c-empty">아직 댓글이 없어요.<br>첫 댓글을 남겨보세요 🎀</div>';
+    return;
+  }
+
+  const roots = list.filter(c => !c.parent_id);
+  const kids = list.filter(c => c.parent_id);
+
+  box.innerHTML = '';
+  roots.forEach(c => {
+    const el = commentNode(c, false);
+    const rs = kids.filter(k => k.parent_id === c.id);
+    if(rs.length){
+      const wrap = document.createElement('div');
+      wrap.className = 'replies';
+      rs.forEach(r => wrap.appendChild(commentNode(r, true)));
+      el.querySelector('.c-main').appendChild(wrap);
+    }
+    box.appendChild(el);
+  });
+}
+
+function commentNode(c, isReply){
+  const el = document.createElement('div');
+  el.className = isReply ? 'reply' : 'comment';
+  const mine = me && c.author_id === me.id;
+  const isAuthor = curPost && c.author_id === curPost.author_id;
+
+  el.innerHTML = `
+    <div class="avatar ${isReply ? 'xs' : 'sm'}">${esc(c.author?.avatar_emoji || '🌷')}</div>
+    <div class="c-main">
+      <div class="c-top">
+        <span class="c-name">${esc(c.author?.nickname || '알 수 없음')}</span>
+        ${isAuthor ? '<span class="c-badge">작성자</span>' : ''}
+        <span class="c-time">${timeAgo(c.created_at)}</span>
+      </div>
+      <p class="c-text">${esc(c.content)}</p>
+      <div class="c-acts">
+        ${isReply ? '' : '<button class="c-act reply">답글</button>'}
+        ${mine ? '<button class="c-act del">삭제</button>' : ''}
+      </div>
+    </div>`;
+
+  const rb = el.querySelector('.reply');
+  if(rb) rb.addEventListener('click', () => startReply(c));
+
+  const db_ = el.querySelector('.del');
+  if(db_) db_.addEventListener('click', async () => {
+    if(!confirm('댓글을 삭제할까요?')) return;
+    const { error } = await db.from('comments').delete().eq('id', c.id);
+    if(error) return toast(ko(error.message), 'bad');
+    await refreshCommentCount();
+    loadComments(curPost.id);
+    toast('댓글을 삭제했어요');
+  });
+
+  return el;
+}
+
+function startReply(c){
+  replyTo = c;
+  $('cReplying').classList.add('on');
+  $('cReplyTo').textContent = '↳ ' + (c.author?.nickname || '') + '님에게 답글';
+  $('cField').focus();
+}
+function cancelReply(){
+  replyTo = null;
+  $('cReplying').classList.remove('on');
+}
+$('cReplyCancel').addEventListener('click', cancelReply);
+
+$('cSend').addEventListener('click', sendComment);
+$('cField').addEventListener('keydown', e => { if(e.key === 'Enter') sendComment(); });
+
+async function sendComment(){
+  const text = $('cField').value.trim();
+  if(!text || !curPost || !me) return;
+
+  const btn = $('cSend');
+  btn.disabled = true;
+
+  const { error } = await db.from('comments').insert({
+    post_id: curPost.id,
+    author_id: me.id,
+    parent_id: replyTo ? replyTo.id : null,
+    content: text
+  });
+
+  btn.disabled = false;
+  if(error) return toast(ko(error.message), 'bad');
+
+  $('cField').value = '';
+  cancelReply();
+  await refreshCommentCount();
+  await loadComments(curPost.id);
+  $('dScroll').scrollTop = $('dScroll').scrollHeight;
+}
+
+async function refreshCommentCount(){
+  if(!curPost) return;
+  const { count } = await db.from('comments')
+    .select('id', { count:'exact', head:true })
+    .eq('post_id', curPost.id);
+  await db.from('posts').update({ comment_count: count || 0 }).eq('id', curPost.id);
+}
+
+/* ================= 사진 크게 보기 ================= */
+let lbIndex = 0;
+
+function openLightbox(i){
+  lbIndex = i;
+  $('lightbox').classList.add('on');
+  drawLightbox();
+}
+function drawLightbox(){
+  const m = curMedia[lbIndex];
+  if(!m) return;
+  $('lbSlot').innerHTML = m.kind === 'video'
+    ? `<video src="${esc(m.url)}" controls playsinline></video>`
+    : `<img src="${esc(m.url)}" alt="">`;
+  $('lbNum').textContent = (lbIndex + 1) + ' / ' + curMedia.length;
+}
+$('lbClose').addEventListener('click', () => $('lightbox').classList.remove('on'));
+$('lbPrev').addEventListener('click', () => {
+  lbIndex = (lbIndex - 1 + curMedia.length) % curMedia.length; drawLightbox();
+});
+$('lbNext').addEventListener('click', () => {
+  lbIndex = (lbIndex + 1) % curMedia.length; drawLightbox();
+});
+$('lightbox').addEventListener('click', e => {
+  if(e.target === $('lightbox')) $('lightbox').classList.remove('on');
 });
 
 /* ================= 내 정보 ================= */
