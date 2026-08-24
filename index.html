@@ -272,10 +272,10 @@
   }
   .nav-item{
     flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
-    background:none; border:none; font-family:inherit; font-size:9px;
-    color:var(--sub); cursor:pointer; padding:5px 0;
+    background:none; border:none; font-family:inherit; font-size:8.5px;
+    color:var(--sub); cursor:pointer; padding:5px 0; gap:2px;
   }
-  .nav-item .ic{ font-size:16px; }
+  .nav-item .ic{ font-size:15px; }
   .nav-item.on{ color:var(--ribbon-deep); font-weight:700; }
 
   /* ============ 글쓰기 ============ */
@@ -817,6 +817,98 @@
   }
   .nav-badge.on{ display:flex; }
 
+  /* ============ 탐색 ============ */
+  .searchbar{ display:flex; align-items:center; gap:9px; padding:14px 18px 10px; flex-shrink:0; }
+  .sfield{
+    flex:1; display:flex; align-items:center; gap:8px;
+    background:#FFFAFC; border:1.5px solid var(--line);
+    border-radius:999px; padding:11px 16px; transition:.15s;
+  }
+  .sfield:focus-within{ border-color:var(--ribbon); background:#fff; box-shadow:0 0 0 3px rgba(236,147,174,0.12); }
+  .sfield input{
+    flex:1; border:none; outline:none; background:transparent;
+    font-family:inherit; font-size:16px; color:var(--text); min-width:0;
+  }
+  .sfield input::placeholder{ color:#D9BFC7; }
+  .sfield .mag{ font-size:14px; color:var(--sub); }
+  .sfield .clr{ font-size:13px; color:#D9BFC7; cursor:pointer; display:none; }
+  .sfield .clr.on{ display:block; }
+
+  .sec{
+    font-family:'Gowun Batang',serif; font-size:13.5px;
+    color:var(--ribbon-deep); letter-spacing:1.5px;
+    padding:20px 20px 11px; display:flex; align-items:center; gap:8px;
+  }
+  .sec::after{
+    content:""; flex:1; height:1px;
+    background:repeating-linear-gradient(to right,var(--line) 0 4px,transparent 4px 8px);
+  }
+  .sec .more{
+    font-family:'Noto Sans KR',sans-serif; font-size:11px;
+    color:var(--sub); background:none; border:none; cursor:pointer;
+  }
+
+  .recents{ display:flex; flex-wrap:wrap; gap:7px; padding:0 18px; }
+  .rchip{
+    display:flex; align-items:center; gap:6px; font-size:12px;
+    background:#fff; border:1px solid var(--line);
+    padding:7px 12px; border-radius:999px; cursor:pointer;
+  }
+  .rchip i{ font-style:normal; color:#D9BFC7; font-size:11px; }
+
+  .rank{
+    display:flex; align-items:center; gap:11px;
+    padding:11px 18px; border-bottom:1px dashed var(--line); cursor:pointer;
+  }
+  .rank:active{ background:#FFFAFC; }
+  .num{
+    font-family:'Gowun Batang',serif; font-size:16px; font-weight:700;
+    color:#E0C3CE; width:19px; text-align:center; flex-shrink:0;
+  }
+  .rank.top .num{ color:var(--ribbon-deep); }
+  .r-main{ flex:1; min-width:0; }
+  .r-title{ font-size:13.5px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .r-meta{ font-size:10.5px; color:var(--sub); margin-top:3px; }
+  .r-meta .z{ color:var(--gold-deep); font-weight:700; }
+  .r-thumb{
+    width:42px; height:42px; border-radius:10px; flex-shrink:0; overflow:hidden;
+    background:linear-gradient(145deg,#FBE7EE,#F5D3DF);
+    display:flex; align-items:center; justify-content:center; font-size:18px;
+  }
+  .r-thumb img{ width:100%; height:100%; object-fit:cover; }
+
+  .users{ display:flex; gap:9px; overflow-x:auto; padding:0 18px 4px; scrollbar-width:none; }
+  .users::-webkit-scrollbar{ display:none; }
+  .ucard{
+    width:118px; flex-shrink:0; background:#fff;
+    border:1px solid var(--line); border-radius:16px;
+    padding:14px 10px; text-align:center;
+  }
+  .ucard .avatar{ width:48px; height:48px; font-size:21px; margin:0 auto 8px; }
+  .u-name{ font-size:12.5px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .u-desc{
+    font-size:10px; color:var(--sub); margin-top:3px; line-height:1.4;
+    height:26px; overflow:hidden;
+  }
+  .fbtn{
+    width:100%; margin-top:9px; font-family:inherit;
+    font-size:11px; font-weight:700; color:var(--ribbon-deep);
+    background:#fff; border:1.5px solid var(--ribbon);
+    padding:7px 0; border-radius:999px; cursor:pointer;
+  }
+  .fbtn.on{
+    background:linear-gradient(180deg,var(--ribbon),var(--ribbon-deep));
+    color:#fff; border-color:transparent;
+  }
+
+  .res-user{
+    display:flex; align-items:center; gap:11px;
+    padding:12px 18px; border-bottom:1px dashed var(--line); cursor:pointer;
+  }
+  .res-name{ font-size:13.5px; font-weight:700; }
+  .res-sub{ font-size:11px; color:var(--sub); margin-top:2px; }
+  mark{ background:#FCE6EC; color:var(--ribbon-deep); font-weight:700; padding:0 1px; border-radius:3px; }
+
   /* ============ 내 정보 ============ */
   .me-wrap{ padding:30px 20px; text-align:center; }
   .me-av{
@@ -952,6 +1044,7 @@
 
     <div class="nav">
       <button class="nav-item on" data-go="home"><span class="ic">🏠</span>홈</button>
+      <button class="nav-item" data-go="explore"><span class="ic">🔍</span>탐색</button>
       <button class="nav-item" data-go="write"><span class="ic">✏️</span>글쓰기</button>
       <button class="nav-item" data-go="noti"><span class="ic">🔔</span>알림<span class="nav-badge">0</span></button>
       <button class="nav-item" data-go="dm"><span class="ic">✉️</span>쪽지</button>
@@ -1025,6 +1118,29 @@
     </div>
   </div>
 
+  <!-- ==================== 탐색 ==================== -->
+  <div class="screen" id="exploreScreen">
+    <div class="searchbar">
+      <div class="sfield">
+        <span class="mag">🔍</span>
+        <input id="sq" placeholder="닉네임이나 글을 검색해보세요">
+        <span class="clr" id="sClr">✕</span>
+      </div>
+    </div>
+    <div class="scroll">
+      <div id="exBrowse"></div>
+      <div id="exResults" style="display:none"></div>
+    </div>
+    <div class="nav">
+      <button class="nav-item" data-go="home"><span class="ic">🏠</span>홈</button>
+      <button class="nav-item on" data-go="explore"><span class="ic">🔍</span>탐색</button>
+      <button class="nav-item" data-go="write"><span class="ic">✏️</span>글쓰기</button>
+      <button class="nav-item" data-go="noti"><span class="ic">🔔</span>알림<span class="nav-badge">0</span></button>
+      <button class="nav-item" data-go="dm"><span class="ic">✉️</span>쪽지</button>
+      <button class="nav-item" data-go="me"><span class="ic">🌷</span>프로필</button>
+    </div>
+  </div>
+
   <!-- ==================== 알림 ==================== -->
   <div class="screen" id="notiScreen">
     <div class="d-head">
@@ -1042,6 +1158,7 @@
     </div>
     <div class="nav">
       <button class="nav-item" data-go="home"><span class="ic">🏠</span>홈</button>
+      <button class="nav-item" data-go="explore"><span class="ic">🔍</span>탐색</button>
       <button class="nav-item" data-go="write"><span class="ic">✏️</span>글쓰기</button>
       <button class="nav-item on" data-go="noti"><span class="ic">🔔</span>알림<span class="nav-badge">0</span></button>
       <button class="nav-item" data-go="dm"><span class="ic">✉️</span>쪽지</button>
@@ -1060,6 +1177,7 @@
     </div>
     <div class="nav">
       <button class="nav-item" data-go="home"><span class="ic">🏠</span>홈</button>
+      <button class="nav-item" data-go="explore"><span class="ic">🔍</span>탐색</button>
       <button class="nav-item" data-go="write"><span class="ic">✏️</span>글쓰기</button>
       <button class="nav-item" data-go="noti"><span class="ic">🔔</span>알림<span class="nav-badge">0</span></button>
       <button class="nav-item on" data-go="dm"><span class="ic">✉️</span>쪽지</button>
@@ -1124,6 +1242,7 @@
 
     <div class="nav">
       <button class="nav-item" data-go="home"><span class="ic">🏠</span>홈</button>
+      <button class="nav-item" data-go="explore"><span class="ic">🔍</span>탐색</button>
       <button class="nav-item" data-go="write"><span class="ic">✏️</span>글쓰기</button>
       <button class="nav-item" data-go="noti"><span class="ic">🔔</span>알림<span class="nav-badge">0</span></button>
       <button class="nav-item" data-go="dm"><span class="ic">✉️</span>쪽지</button>
@@ -2293,6 +2412,209 @@ $('edSave').addEventListener('click', async () => {
   openProfile(me.id);
 });
 
+/* ================= 탐색 ================= */
+let searchTimer = null;
+
+function getRecents(){
+  try{ return JSON.parse(sessionStorage.getItem('rb_recents') || '[]'); }catch{ return []; }
+}
+function addRecent(q){
+  let list = getRecents().filter(x => x !== q);
+  list.unshift(q);
+  list = list.slice(0, 8);
+  try{ sessionStorage.setItem('rb_recents', JSON.stringify(list)); }catch{}
+}
+function removeRecent(q){
+  try{ sessionStorage.setItem('rb_recents', JSON.stringify(getRecents().filter(x => x !== q))); }catch{}
+}
+
+async function openExplore(){
+  screen('explore');
+  $('sq').value = '';
+  $('sClr').classList.remove('on');
+  $('exResults').style.display = 'none';
+  $('exBrowse').style.display = 'block';
+  loadBrowse();
+}
+
+async function loadBrowse(){
+  const box = $('exBrowse');
+  box.innerHTML = '<div class="loading">불러오는 중...</div>';
+
+  const [popRes, userRes] = await Promise.all([
+    db.from('posts')
+      .select('id, title, like_count, comment_count, boards(label, zone), post_media(url, kind, sort_order)')
+      .order('like_count', { ascending:false })
+      .order('comment_count', { ascending:false })
+      .limit(5),
+    db.from('profiles')
+      .select('id, nickname, handle, bio, avatar_emoji, avatar_url, role')
+      .order('created_at', { ascending:false })
+      .limit(20)
+  ]);
+
+  const pop = popRes.data || [];
+  const users = (userRes.data || []).filter(u => u.id !== me.id && !followingSet.has(u.id)).slice(0, 10);
+
+  let html = '';
+
+  const rec = getRecents();
+  if(rec.length){
+    html += '<div class="sec">최근 검색<button class="more" id="clrRec">전체 삭제</button></div>';
+    html += '<div class="recents">' + rec.map(r =>
+      `<span class="rchip" data-q="${esc(r)}">${esc(r)} <i>✕</i></span>`).join('') + '</div>';
+  }
+
+  if(pop.length){
+    html += '<div class="sec">인기글</div><div>';
+    pop.forEach((p, i) => {
+      const m = (p.post_media || []).sort((a,b) => a.sort_order - b.sort_order)[0];
+      const thumb = m
+        ? (m.kind === 'video' ? '<div class="r-thumb">🎬</div>' : `<div class="r-thumb"><img src="${esc(m.url)}" alt=""></div>`)
+        : '<div class="r-thumb">🎀</div>';
+      html += `
+        <div class="rank${i < 3 ? ' top' : ''}" data-post="${p.id}">
+          <span class="num">${i + 1}</span>
+          <div class="r-main">
+            <div class="r-title">${esc(p.title)}</div>
+            <div class="r-meta">${p.boards?.zone === 'info' ? '<span class="z">📌 정보함</span>' : '🎀 내 방'} · ${esc(p.boards?.label || '')} · 🎀 ${p.like_count || 0} · 💬 ${p.comment_count || 0}</div>
+          </div>
+          ${thumb}
+        </div>`;
+    });
+    html += '</div>';
+  }
+
+  if(users.length){
+    html += '<div class="sec">이런 사람 어때요?</div><div class="users">';
+    users.forEach(u => {
+      html += `
+        <div class="ucard">
+          <div class="avatar" data-user="${u.id}">${avatarInner(u)}</div>
+          <div class="u-name" data-user="${u.id}">${esc(u.nickname)}</div>
+          <div class="u-desc">${esc(u.bio || '아직 소개가 없어요')}</div>
+          <button class="fbtn" data-follow="${u.id}">팔로우</button>
+        </div>`;
+    });
+    html += '</div>';
+  }
+
+  if(!html) html = '<div class="empty"><span class="e">🎀</span><h3>아직 둘러볼 게 없어요</h3><p>첫 글을 남겨보세요!</p></div>';
+  box.innerHTML = html;
+
+  box.querySelectorAll('.rank').forEach(r =>
+    r.addEventListener('click', () => openDetail(parseInt(r.dataset.post))));
+  box.querySelectorAll('[data-user]').forEach(el =>
+    el.addEventListener('click', () => openProfile(el.dataset.user)));
+  box.querySelectorAll('[data-follow]').forEach(b =>
+    b.addEventListener('click', () => toggleFollow(b.dataset.follow, b)));
+  box.querySelectorAll('.rchip').forEach(c =>
+    c.addEventListener('click', e => {
+      const q = c.dataset.q;
+      if(e.target.tagName === 'I'){ removeRecent(q); loadBrowse(); return; }
+      $('sq').value = q; runSearch(q);
+    }));
+  const cr = $('clrRec');
+  if(cr) cr.addEventListener('click', () => {
+    try{ sessionStorage.removeItem('rb_recents'); }catch{}
+    loadBrowse();
+  });
+}
+
+$('sq').addEventListener('input', () => {
+  const q = $('sq').value.trim();
+  $('sClr').classList.toggle('on', q.length > 0);
+  clearTimeout(searchTimer);
+  if(!q){
+    $('exResults').style.display = 'none';
+    $('exBrowse').style.display = 'block';
+    return;
+  }
+  searchTimer = setTimeout(() => runSearch(q), 350);
+});
+
+$('sClr').addEventListener('click', () => {
+  $('sq').value = '';
+  $('sClr').classList.remove('on');
+  $('exResults').style.display = 'none';
+  $('exBrowse').style.display = 'block';
+  loadBrowse();
+});
+
+function hl(text, q){
+  const t = esc(text || '');
+  const eq = esc(q);
+  if(!eq) return t;
+  return t.replace(new RegExp(eq.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), m => `<mark>${m}</mark>`);
+}
+
+async function runSearch(q){
+  addRecent(q);
+  $('exBrowse').style.display = 'none';
+  const box = $('exResults');
+  box.style.display = 'block';
+  box.innerHTML = '<div class="loading">찾는 중...</div>';
+
+  const [uRes, pRes] = await Promise.all([
+    db.from('profiles')
+      .select('id, nickname, handle, bio, avatar_emoji, avatar_url, role')
+      .or(`nickname.ilike.%${q}%,handle.ilike.%${q}%`)
+      .limit(10),
+    db.from('posts')
+      .select('*, author:profiles!posts_author_id_fkey(id, nickname, handle, avatar_emoji, avatar_url, role), boards(label, zone), post_media(url, kind, sort_order)')
+      .or(`title.ilike.%${q}%,content.ilike.%${q}%`)
+      .order('created_at', { ascending:false })
+      .limit(20)
+  ]);
+
+  const users = uRes.data || [];
+  const posts = pRes.data || [];
+
+  if(!users.length && !posts.length){
+    box.innerHTML = `
+      <div class="empty">
+        <span class="e">🔍</span>
+        <h3>결과가 없어요</h3>
+        <p>"${esc(q)}"에 해당하는<br>사람이나 글을 찾지 못했어요.</p>
+      </div>`;
+    return;
+  }
+
+  box.innerHTML = '';
+
+  if(users.length){
+    const t = document.createElement('div');
+    t.className = 'sec';
+    t.textContent = '사람';
+    box.appendChild(t);
+
+    users.forEach(u => {
+      const el = document.createElement('div');
+      el.className = 'res-user';
+      el.innerHTML = `
+        <div class="avatar">${avatarInner(u)}</div>
+        <div style="flex:1;min-width:0">
+          <div class="res-name">${hl(u.nickname, q)} ${hostBadge(u)}</div>
+          <div class="res-sub">@${hl(u.handle, q)}</div>
+        </div>`;
+      el.addEventListener('click', () => openProfile(u.id));
+      box.appendChild(el);
+    });
+  }
+
+  if(posts.length){
+    const t = document.createElement('div');
+    t.className = 'sec';
+    t.textContent = '글';
+    box.appendChild(t);
+
+    const wrap = document.createElement('div');
+    wrap.style.padding = '6px 18px 20px';
+    posts.forEach(p => wrap.appendChild(postCard(p)));
+    box.appendChild(wrap);
+  }
+}
+
 /* ================= 알림 ================= */
 let notiFilter = 'all';
 
@@ -2599,6 +2921,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
     const go = item.dataset.go;
     if(go === 'home'){ screen('home'); loadFeed(); }
     else if(go === 'write') openWrite();
+    else if(go === 'explore') openExplore();
     else if(go === 'noti') openNoti();
     else if(go === 'dm') openDM();
     else if(go === 'me') openProfile(me.id);
