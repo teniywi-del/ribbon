@@ -13,6 +13,7 @@
     --ribbon:#EC93AE;
     --ribbon-deep:#D9718F;
     --gold:#E5B978;
+    --gold-deep:#A97C33;
     --text:#3A2C30;
     --sub:#9C8489;
     --line:#F5DEE6;
@@ -24,7 +25,8 @@
     font-family:'Noto Sans KR',sans-serif;
     background:var(--card);
     color:var(--text);
-    min-height:100vh;
+    height:100vh;
+    overflow:hidden;
     display:flex;
     justify-content:center;
   }
@@ -32,7 +34,7 @@
   .app{
     width:100%;
     max-width:460px;
-    min-height:100vh;
+    height:100vh;
     display:flex;
     flex-direction:column;
     position:relative;
@@ -44,9 +46,49 @@
     flex-shrink:0;
   }
 
+  .screen{ display:none; flex:1; flex-direction:column; min-height:0; }
+  .screen.on{ display:flex; }
+
+  /* ============ 공통 ============ */
   .scroll{
-    flex:1;
-    overflow-y:auto;
+    flex:1; overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .btn-primary{
+    width:100%;
+    font-family:inherit; font-size:15px; font-weight:700;
+    color:#fff; border:none;
+    padding:16px; border-radius:999px;
+    background:linear-gradient(180deg,var(--ribbon),var(--ribbon-deep));
+    box-shadow:0 6px 16px rgba(217,113,143,0.35);
+    cursor:pointer; margin-top:8px;
+  }
+  .btn-primary:disabled{ opacity:.55; }
+
+  .input{
+    width:100%;
+    border:1.5px solid var(--line);
+    background:#FFFAFC;
+    border-radius:14px;
+    padding:14px 16px;
+    font-family:inherit; font-size:16px;
+    color:var(--text); outline:none; transition:.15s;
+  }
+  .input::placeholder{ color:#D9BFC7; }
+  .input:focus{ border-color:var(--ribbon); background:#fff; box-shadow:0 0 0 3px rgba(236,147,174,0.12); }
+  .input.ok{ border-color:#A8D5B5; }
+  .input.err{ border-color:#E89898; }
+
+  .label{ font-size:11.5px; color:var(--sub); margin-bottom:6px; display:block; padding-left:4px; }
+  .field{ margin-bottom:14px; position:relative; z-index:1; }
+  .msg{ font-size:11px; margin-top:5px; padding-left:4px; display:none; }
+  .msg.show{ display:block; }
+  .msg.good{ color:#5F9E74; }
+  .msg.bad{ color:#C96B6B; }
+
+  /* ============ 인증 화면 ============ */
+  #authScreen .scroll{
     padding:0 30px 40px;
     position:relative;
     background:
@@ -54,7 +96,6 @@
       radial-gradient(circle at 88% 22%, rgba(229,185,120,0.09), transparent 38%),
       var(--card);
   }
-
   .wm{ position:absolute; font-size:120px; opacity:.045; pointer-events:none; user-select:none; }
   .wm1{ top:40px; right:-20px; transform:rotate(15deg); }
   .wm2{ bottom:60px; left:-30px; transform:rotate(-20deg); }
@@ -68,65 +109,22 @@
   }
   .logo-sub{ font-size:12px; color:var(--sub); letter-spacing:1.5px; }
 
-  .field{ margin-bottom:14px; position:relative; z-index:1; }
-  .label{ font-size:11.5px; color:var(--sub); margin-bottom:6px; display:block; padding-left:4px; }
-  .input{
-    width:100%;
-    border:1.5px solid var(--line);
-    background:#FFFAFC;
-    border-radius:14px;
-    padding:14px 16px;
-    font-family:inherit;
-    font-size:16px;
-    color:var(--text);
-    outline:none;
-    transition:.15s;
-  }
-  .input::placeholder{ color:#D9BFC7; }
-  .input:focus{ border-color:var(--ribbon); background:#fff; box-shadow:0 0 0 3px rgba(236,147,174,0.12); }
-  .input.ok{ border-color:#A8D5B5; }
-  .input.err{ border-color:#E89898; }
-
-  .msg{ font-size:11px; margin-top:5px; padding-left:4px; display:none; }
-  .msg.show{ display:block; }
-  .msg.good{ color:#5F9E74; }
-  .msg.bad{ color:#C96B6B; }
-
   .strength{ display:flex; gap:4px; margin-top:7px; }
   .strength i{ flex:1; height:3px; border-radius:3px; background:var(--line); transition:.2s; }
   .strength.s1 i:nth-child(1){ background:#E89898; }
   .strength.s2 i:nth-child(-n+2){ background:var(--gold); }
   .strength.s3 i{ background:#A8D5B5; }
 
-  .primary{
-    width:100%;
-    font-family:inherit;
-    font-size:15px; font-weight:700;
-    color:#fff; border:none;
-    padding:16px;
-    border-radius:999px;
-    background:linear-gradient(180deg,var(--ribbon),var(--ribbon-deep));
-    box-shadow:0 6px 16px rgba(217,113,143,0.35);
-    cursor:pointer;
-    margin-top:8px;
-    position:relative; z-index:1;
-  }
-  .primary:active{ transform:translateY(1px); }
-  .primary:disabled{ opacity:.55; }
-
   .row-sub{ display:flex; justify-content:flex-end; margin-top:16px; position:relative; z-index:1; }
   .link{
-    font-size:12px; color:var(--sub);
-    background:none; border:none; font-family:inherit;
-    cursor:pointer; text-decoration:underline; text-underline-offset:3px;
+    font-size:12px; color:var(--sub); background:none; border:none;
+    font-family:inherit; cursor:pointer; text-decoration:underline; text-underline-offset:3px;
   }
-
   .bottom-switch{ text-align:center; margin-top:26px; font-size:12.5px; color:var(--sub); position:relative; z-index:1; }
   .bottom-switch button{
     font-family:inherit; font-size:12.5px; font-weight:700;
     color:var(--ribbon-deep); background:none; border:none; cursor:pointer; margin-left:4px;
   }
-
   .back-row{ display:flex; align-items:center; gap:10px; padding:18px 0 6px; position:relative; z-index:1; }
   .back{ font-size:18px; color:var(--ribbon-deep); background:none; border:none; cursor:pointer; }
   .page-t{ font-family:'Gowun Batang',serif; font-size:19px; letter-spacing:2px; }
@@ -148,170 +146,359 @@
   }
   .box.on{ background:linear-gradient(180deg,var(--ribbon),var(--ribbon-deep)); border-color:transparent; }
 
-  .view-page{ display:none; }
-  .view-page.on{ display:block; }
+  .auth-page{ display:none; }
+  .auth-page.on{ display:block; }
 
-  /* 토스트 */
+  /* ============ 홈 ============ */
+  header{
+    display:flex; align-items:center;
+    padding:14px 18px 10px;
+    flex-shrink:0;
+  }
+  .logo{ font-family:'Gowun Batang',serif; font-size:19px; font-weight:700; letter-spacing:3px; }
+  .h-acts{ margin-left:auto; display:flex; gap:14px; font-size:17px; color:var(--sub); }
+  .h-acts button{ background:none; border:none; font-size:17px; cursor:pointer; }
+
+  .zones{
+    display:flex; margin:0 18px 10px; padding:4px;
+    background:linear-gradient(180deg,#FCEDF1,#F9E1E9);
+    border-radius:999px; flex-shrink:0;
+  }
+  .zone{
+    flex:1; font-family:inherit; font-size:13.5px;
+    color:var(--sub); background:none; border:none;
+    padding:10px 0; border-radius:999px; cursor:pointer; transition:.18s;
+  }
+  .zone.on{ background:#fff; color:var(--ribbon-deep); font-weight:700; box-shadow:0 2px 7px rgba(217,113,143,0.2); }
+  .zone.info.on{ color:var(--gold-deep); box-shadow:0 2px 7px rgba(229,185,120,0.28); }
+
+  .subbar{
+    display:flex; align-items:center; gap:7px;
+    padding:0 18px 10px; flex-shrink:0;
+    overflow-x:auto; scrollbar-width:none;
+  }
+  .subbar::-webkit-scrollbar{ display:none; }
+
+  .seg{ display:flex; padding:3px; background:#F7EBEF; border-radius:999px; flex-shrink:0; }
+  .seg button{
+    font-family:inherit; font-size:11.5px; color:var(--sub);
+    background:none; border:none; padding:6px 13px; border-radius:999px;
+    cursor:pointer; white-space:nowrap; transition:.15s;
+  }
+  .seg button.on{ background:#fff; color:var(--ribbon-deep); font-weight:700; box-shadow:0 1px 4px rgba(217,113,143,0.2); }
+  .sep{ width:1px; height:16px; background:var(--line); flex-shrink:0; margin:0 2px; }
+
+  .chip{
+    font-family:inherit; font-size:11.5px; color:var(--sub);
+    background:#fff; border:1px solid var(--line);
+    padding:6px 13px; border-radius:999px; cursor:pointer;
+    white-space:nowrap; flex-shrink:0; transition:.15s;
+  }
+  .chip.on{ background:linear-gradient(180deg,#FCE6EC,#F9D7E1); border-color:var(--ribbon); color:var(--ribbon-deep); font-weight:700; }
+  .chip.g.on{ background:linear-gradient(180deg,#FBF0DC,#F6E3C4); border-color:var(--gold); color:var(--gold-deep); }
+
+  .feed{
+    padding:4px 18px 18px;
+    background:
+      radial-gradient(circle at 92% 5%, rgba(236,147,174,0.05), transparent 40%),
+      var(--card);
+    min-height:100%;
+  }
+
+  .post{
+    position:relative; background:#fff;
+    border:1px solid var(--line); border-radius:18px;
+    padding:15px; margin-bottom:13px; cursor:pointer; overflow:hidden;
+  }
+  .post::before{
+    content:""; position:absolute; top:0; left:0;
+    border-width:0 16px 16px 0; border-style:solid;
+    border-color:transparent var(--ribbon) transparent transparent;
+    transform:rotate(180deg);
+  }
+  .post.info{ border-color:#F0DDBE; background:linear-gradient(180deg,#FFFDF8,#fff); }
+  .post.info::before{ border-color:transparent var(--gold) transparent transparent; }
+
+  .p-head{ display:flex; align-items:center; gap:9px; margin-bottom:10px; }
+  .avatar{
+    width:34px; height:34px; border-radius:50%;
+    background:linear-gradient(145deg,#FBE3EA,#F6CBD9);
+    border:2px solid var(--gold);
+    display:flex; align-items:center; justify-content:center;
+    font-size:15px; flex-shrink:0;
+  }
+  .p-name{ font-size:13px; font-weight:700; }
+  .p-meta{ font-size:10.5px; color:var(--sub); margin-top:1px; }
+  .p-del{
+    margin-left:auto; background:none; border:none;
+    color:#D9BFC7; font-size:15px; cursor:pointer; padding:4px 6px;
+  }
+
+  .p-title{ font-size:14.5px; font-weight:700; margin-bottom:6px; line-height:1.45; }
+  .p-text{
+    font-size:13px; line-height:1.7;
+    display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
+    white-space:pre-wrap; word-break:break-word;
+  }
+  .p-acts{
+    display:flex; align-items:center; gap:16px;
+    margin-top:12px; padding-top:11px;
+    border-top:1px dashed var(--line);
+    font-size:12px; color:var(--sub);
+  }
+  .act{ display:flex; align-items:center; gap:5px; cursor:pointer; background:none; border:none; font-family:inherit; font-size:12px; color:var(--sub); }
+  .act.liked{ color:var(--ribbon-deep); font-weight:700; }
+
+  .empty{ text-align:center; padding:54px 20px; color:var(--sub); }
+  .empty .e{ font-size:38px; display:block; margin-bottom:12px; opacity:.7; }
+  .empty h3{ font-family:'Gowun Batang',serif; font-size:15px; color:var(--text); margin-bottom:7px; letter-spacing:1px; }
+  .empty p{ font-size:12px; line-height:1.8; }
+  .empty button{
+    margin-top:16px; font-family:inherit; font-size:12.5px; font-weight:700;
+    color:#fff; border:none; padding:11px 22px; border-radius:999px;
+    background:linear-gradient(180deg,var(--ribbon),var(--ribbon-deep));
+    box-shadow:0 5px 13px rgba(217,113,143,0.32); cursor:pointer;
+  }
+  .loading{ text-align:center; padding:50px 0; color:var(--sub); font-size:12.5px; }
+
+  .nav{
+    display:flex; border-top:1px solid var(--line);
+    background:#FFFCFD; flex-shrink:0; padding:6px 0 8px;
+  }
+  .nav-item{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+    background:none; border:none; font-family:inherit; font-size:9.5px;
+    color:var(--sub); cursor:pointer; padding:5px 0;
+  }
+  .nav-item .ic{ font-size:17px; }
+  .nav-item.on{ color:var(--ribbon-deep); font-weight:700; }
+
+  /* ============ 글쓰기 ============ */
+  .w-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 18px; border-bottom:1px solid var(--line); flex-shrink:0;
+  }
+  .w-cancel{ font-size:14px; color:var(--sub); background:none; border:none; font-family:inherit; cursor:pointer; }
+  .w-title{ font-family:'Gowun Batang',serif; font-size:16px; letter-spacing:1px; }
+  .w-submit{
+    font-family:inherit; font-size:14px; font-weight:700; color:#fff;
+    border:none; padding:8px 18px; border-radius:999px;
+    background:linear-gradient(180deg,var(--ribbon),var(--ribbon-deep));
+    box-shadow:0 4px 10px rgba(217,113,143,0.35); cursor:pointer;
+  }
+  .w-submit:disabled{ opacity:.5; }
+  .w-body{ padding:18px; }
+  .board-row{ display:flex; align-items:center; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .board-label{ font-size:12px; color:var(--sub); margin-right:2px; }
+  .title-input{
+    width:100%; border:none; border-bottom:1px dashed var(--line);
+    padding:10px 2px 12px; font-family:inherit; font-size:16px; font-weight:700;
+    outline:none; background:transparent;
+  }
+  .title-input::placeholder{ color:#D9BFC7; font-weight:500; }
+  .content-input{
+    width:100%; min-height:200px; border:none; padding:14px 2px;
+    font-family:inherit; font-size:15px; line-height:1.7;
+    outline:none; resize:none; background:transparent;
+  }
+  .content-input::placeholder{ color:#D9BFC7; }
+  .w-len{ font-size:11.5px; color:var(--sub); text-align:right; }
+
+  /* ============ 내 정보 ============ */
+  .me-wrap{ padding:30px 20px; text-align:center; }
+  .me-av{
+    width:80px; height:80px; border-radius:50%; margin:0 auto 14px;
+    background:linear-gradient(145deg,#FBE3EA,#F6CBD9);
+    border:3px solid var(--gold);
+    display:flex; align-items:center; justify-content:center; font-size:34px;
+    box-shadow:0 6px 16px rgba(217,113,143,0.25);
+  }
+  .me-name{ font-family:'Gowun Batang',serif; font-size:21px; letter-spacing:1.5px; }
+  .me-handle{ font-size:12px; color:var(--sub); margin-top:4px; }
+  .me-email{ font-size:11.5px; color:var(--sub); margin-top:2px; }
+  .me-stat{
+    display:flex; margin:22px 0 0; padding:14px 0;
+    background:#fff; border:1px solid var(--line); border-radius:18px;
+  }
+  .me-stat div{ flex:1; }
+  .me-stat b{ display:block; font-family:'Gowun Batang',serif; font-size:17px; }
+  .me-stat span{ font-size:10.5px; color:var(--sub); }
+  .ghost{
+    margin-top:22px; font-family:inherit; font-size:13px; font-weight:700;
+    color:var(--ribbon-deep); background:#fff; border:1.5px solid var(--ribbon);
+    padding:13px 26px; border-radius:999px; cursor:pointer;
+  }
+
+  /* ============ 토스트 ============ */
   .toast{
-    position:fixed;
-    left:50%; bottom:34px;
+    position:fixed; left:50%; bottom:80px;
     transform:translateX(-50%) translateY(20px);
-    background:var(--text); color:#fff;
-    font-size:13px;
-    padding:13px 20px;
-    border-radius:999px;
+    background:var(--text); color:#fff; font-size:13px;
+    padding:13px 20px; border-radius:999px;
     box-shadow:0 8px 24px rgba(0,0,0,.2);
-    opacity:0; pointer-events:none;
-    transition:.25s;
-    z-index:99;
-    max-width:88vw;
-    text-align:center;
-    line-height:1.5;
+    opacity:0; pointer-events:none; transition:.25s;
+    z-index:99; max-width:88vw; text-align:center; line-height:1.5;
   }
   .toast.on{ opacity:1; transform:translateX(-50%) translateY(0); }
   .toast.bad{ background:#C96B6B; }
   .toast.good{ background:#5F9E74; }
-
-  /* 로그인 완료 화면 */
-  .done{ text-align:center; padding:80px 20px; position:relative; z-index:1; }
-  .done .e{ font-size:52px; display:block; margin-bottom:18px; }
-  .done h2{ font-family:'Gowun Batang',serif; font-size:21px; letter-spacing:1.5px; margin-bottom:10px; }
-  .done p{ font-size:13px; color:var(--sub); line-height:1.9; }
-  .done .card{
-    margin:26px auto 0;
-    max-width:300px;
-    background:linear-gradient(145deg,#FFF3F7,#FDE9F0);
-    border:1px solid var(--line);
-    border-radius:20px;
-    padding:20px;
-  }
-  .done .card b{ font-size:15px; }
-  .done .card span{ display:block; font-size:11.5px; color:var(--sub); margin-top:4px; }
-  .ghost{
-    margin-top:22px;
-    font-family:inherit; font-size:13px; font-weight:700;
-    color:var(--ribbon-deep);
-    background:#fff; border:1.5px solid var(--ribbon);
-    padding:13px 26px; border-radius:999px; cursor:pointer;
-  }
 </style>
 </head>
 <body>
 <div class="app">
   <div class="ribbon-top"></div>
 
-  <div class="scroll">
-    <div class="wm wm1">🎀</div>
-    <div class="wm wm2">🎀</div>
+  <!-- ==================== 인증 ==================== -->
+  <div class="screen on" id="authScreen">
+    <div class="scroll">
+      <div class="wm wm1">🎀</div>
+      <div class="wm wm2">🎀</div>
 
-    <!-- ===== 로그인 ===== -->
-    <div class="view-page on" id="loginView">
-      <div class="logo-area">
-        <span class="logo-mark">🎀</span>
-        <div class="logo-name">리 본</div>
-        <div class="logo-line"></div>
-        <div class="logo-sub">취향으로 이어지는 곳</div>
+      <!-- 로그인 -->
+      <div class="auth-page on" id="loginPage">
+        <div class="logo-area">
+          <span class="logo-mark">🎀</span>
+          <div class="logo-name">리 본</div>
+          <div class="logo-line"></div>
+          <div class="logo-sub">취향으로 이어지는 곳</div>
+        </div>
+        <div class="field">
+          <label class="label">이메일</label>
+          <input class="input" type="email" id="li_email" placeholder="ribbon@example.com" autocomplete="email">
+        </div>
+        <div class="field">
+          <label class="label">비밀번호</label>
+          <input class="input" type="password" id="li_pw" placeholder="비밀번호를 입력해주세요" autocomplete="current-password">
+        </div>
+        <button class="btn-primary" id="loginBtn">로그인</button>
+        <div class="row-sub"><button class="link" id="resetBtn">비밀번호를 잊으셨나요?</button></div>
+        <div class="bottom-switch">아직 계정이 없으신가요?<button id="toSignup">가입하기</button></div>
       </div>
 
-      <div class="field">
-        <label class="label">이메일</label>
-        <input class="input" type="email" id="li_email" placeholder="ribbon@example.com" autocomplete="email">
+      <!-- 회원가입 -->
+      <div class="auth-page" id="signupPage">
+        <div class="back-row">
+          <button class="back" id="toLogin1">←</button>
+          <span class="page-t">회원가입</span>
+        </div>
+        <p class="page-desc">리본에 오신 걸 환영해요 🎀<br>닉네임은 나중에 언제든 바꿀 수 있어요.</p>
+        <div class="field">
+          <label class="label">이메일</label>
+          <input class="input" type="email" id="su_email" placeholder="ribbon@example.com" autocomplete="email">
+        </div>
+        <div class="field">
+          <label class="label">닉네임</label>
+          <input class="input" id="su_nick" placeholder="2~12자로 지어주세요" maxlength="12">
+          <div class="msg" id="nickMsg"></div>
+        </div>
+        <div class="field">
+          <label class="label">비밀번호</label>
+          <input class="input" type="password" id="su_pw" placeholder="8자 이상, 영문+숫자" autocomplete="new-password">
+          <div class="strength" id="st"><i></i><i></i><i></i></div>
+          <div class="msg bad" id="pwMsg">8자 이상 입력해주세요</div>
+        </div>
+        <div class="field">
+          <label class="label">비밀번호 확인</label>
+          <input class="input" type="password" id="su_pw2" placeholder="한 번 더 입력해주세요" autocomplete="new-password">
+          <div class="msg" id="pw2Msg"></div>
+        </div>
+        <div class="terms">
+          <div class="term-row all" id="termAll"><span class="box">✓</span><span>전체 동의</span></div>
+          <div class="term-row t1"><span class="box">✓</span><span>이용약관 동의</span><span class="opt">(필수)</span></div>
+          <div class="term-row t1"><span class="box">✓</span><span>개인정보 처리방침 동의</span><span class="opt">(필수)</span></div>
+          <div class="term-row t1"><span class="box">✓</span><span>만 14세 이상입니다</span><span class="opt">(필수)</span></div>
+          <div class="term-row t1"><span class="box">✓</span><span>마케팅 알림 수신</span><span class="opt">(선택)</span></div>
+        </div>
+        <button class="btn-primary" id="signupBtn">가입하고 시작하기</button>
+        <div class="bottom-switch">이미 계정이 있으신가요?<button id="toLogin2">로그인</button></div>
       </div>
+    </div>
+  </div>
 
-      <div class="field">
-        <label class="label">비밀번호</label>
-        <input class="input" type="password" id="li_pw" placeholder="비밀번호를 입력해주세요" autocomplete="current-password">
+  <!-- ==================== 홈 ==================== -->
+  <div class="screen" id="homeScreen">
+    <header>
+      <span class="logo">리 본</span>
+      <div class="h-acts">
+        <button id="refreshBtn">↻</button>
       </div>
+    </header>
 
-      <button class="primary" id="loginBtn">로그인</button>
+    <div class="zones">
+      <button class="zone on" id="zRoom">🎀 내 방</button>
+      <button class="zone info" id="zInfo">📌 정보함</button>
+    </div>
 
-      <div class="row-sub">
-        <button class="link" id="resetBtn">비밀번호를 잊으셨나요?</button>
-      </div>
+    <div class="subbar" id="subbar"></div>
 
-      <div class="bottom-switch">
-        아직 계정이 없으신가요?
-        <button id="toSignup">가입하기</button>
+    <div class="scroll">
+      <div class="feed" id="feed">
+        <div class="loading">불러오는 중...</div>
       </div>
     </div>
 
-    <!-- ===== 회원가입 ===== -->
-    <div class="view-page" id="signupView">
-      <div class="back-row">
-        <button class="back" id="toLogin1">←</button>
-        <span class="page-t">회원가입</span>
-      </div>
-      <p class="page-desc">리본에 오신 걸 환영해요 🎀<br>닉네임은 나중에 언제든 바꿀 수 있어요.</p>
+    <div class="nav">
+      <button class="nav-item on" data-go="home"><span class="ic">🏠</span>홈</button>
+      <button class="nav-item" data-go="write"><span class="ic">✏️</span>글쓰기</button>
+      <button class="nav-item" data-go="me"><span class="ic">🌷</span>내 정보</button>
+    </div>
+  </div>
 
-      <div class="field">
-        <label class="label">이메일</label>
-        <input class="input" type="email" id="su_email" placeholder="ribbon@example.com" autocomplete="email">
-      </div>
-
-      <div class="field">
-        <label class="label">닉네임</label>
-        <input class="input" id="su_nick" placeholder="2~12자로 지어주세요" maxlength="12">
-        <div class="msg" id="nickMsg"></div>
-      </div>
-
-      <div class="field">
-        <label class="label">비밀번호</label>
-        <input class="input" type="password" id="su_pw" placeholder="8자 이상, 영문+숫자" autocomplete="new-password">
-        <div class="strength" id="st"><i></i><i></i><i></i></div>
-        <div class="msg bad" id="pwMsg">8자 이상 입력해주세요</div>
-      </div>
-
-      <div class="field">
-        <label class="label">비밀번호 확인</label>
-        <input class="input" type="password" id="su_pw2" placeholder="한 번 더 입력해주세요" autocomplete="new-password">
-        <div class="msg" id="pw2Msg"></div>
-      </div>
-
-      <div class="terms">
-        <div class="term-row all" id="termAll"><span class="box">✓</span><span>전체 동의</span></div>
-        <div class="term-row t1"><span class="box">✓</span><span>이용약관 동의</span><span class="opt">(필수)</span></div>
-        <div class="term-row t1"><span class="box">✓</span><span>개인정보 처리방침 동의</span><span class="opt">(필수)</span></div>
-        <div class="term-row t1"><span class="box">✓</span><span>만 14세 이상입니다</span><span class="opt">(필수)</span></div>
-        <div class="term-row t1"><span class="box">✓</span><span>마케팅 알림 수신</span><span class="opt">(선택)</span></div>
-      </div>
-
-      <button class="primary" id="signupBtn">가입하고 시작하기</button>
-
-      <div class="bottom-switch">
-        이미 계정이 있으신가요?
-        <button id="toLogin2">로그인</button>
+  <!-- ==================== 글쓰기 ==================== -->
+  <div class="screen" id="writeScreen">
+    <div class="w-head">
+      <button class="w-cancel" id="wCancel">취소</button>
+      <div class="w-title">글쓰기</div>
+      <button class="w-submit" id="wSubmit">올리기</button>
+    </div>
+    <div class="scroll">
+      <div class="w-body">
+        <div class="board-row" id="wBoards">
+          <span class="board-label">게시판</span>
+        </div>
+        <input class="title-input" id="wTitle" placeholder="제목을 입력해주세요" maxlength="60">
+        <textarea class="content-input" id="wContent" placeholder="무슨 이야기를 나누고 싶나요?" maxlength="2000"></textarea>
+        <div class="w-len"><span id="wLen">0</span> / 2000</div>
       </div>
     </div>
+  </div>
 
-    <!-- ===== 로그인 완료 ===== -->
-    <div class="view-page" id="doneView">
-      <div class="done">
-        <span class="e">🎀</span>
-        <h2>어서오세요!</h2>
-        <p>로그인에 성공했어요.<br>여기부터는 다음 단계에서 만들 거예요.</p>
-        <div class="card">
-          <b id="doneNick">-</b>
-          <span id="doneHandle">-</span>
-          <span id="doneEmail">-</span>
+  <!-- ==================== 내 정보 ==================== -->
+  <div class="screen" id="meScreen">
+    <div class="scroll">
+      <div class="me-wrap">
+        <div class="me-av" id="meAv">🌷</div>
+        <div class="me-name" id="meName">-</div>
+        <div class="me-handle" id="meHandle">-</div>
+        <div class="me-email" id="meEmail">-</div>
+        <div class="me-stat">
+          <div><b id="mePosts">0</b><span>내가 쓴 글</span></div>
+          <div><b id="meLikes">0</b><span>받은 리본</span></div>
         </div>
         <button class="ghost" id="logoutBtn">로그아웃</button>
       </div>
     </div>
-
+    <div class="nav">
+      <button class="nav-item" data-go="home"><span class="ic">🏠</span>홈</button>
+      <button class="nav-item" data-go="write"><span class="ic">✏️</span>글쓰기</button>
+      <button class="nav-item on" data-go="me"><span class="ic">🌷</span>내 정보</button>
+    </div>
   </div>
+
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-  function go(v){
-    document.querySelectorAll('.view-page').forEach(p => p.classList.remove('on'));
-    document.getElementById(v + 'View').classList.add('on');
-    document.querySelector('.scroll').scrollTop = 0;
-  }
-  document.getElementById('toSignup').addEventListener('click', () => go('signup'));
-  document.getElementById('toLogin1').addEventListener('click', () => go('login'));
-  document.getElementById('toLogin2').addEventListener('click', () => go('login'));
+/* 화면 전환은 라이브러리와 무관하게 동작 */
+function authPage(v){
+  document.querySelectorAll('.auth-page').forEach(p => p.classList.remove('on'));
+  document.getElementById(v + 'Page').classList.add('on');
+  document.querySelector('#authScreen .scroll').scrollTop = 0;
+}
+document.getElementById('toSignup').addEventListener('click', () => authPage('signup'));
+document.getElementById('toLogin1').addEventListener('click', () => authPage('login'));
+document.getElementById('toLogin2').addEventListener('click', () => authPage('login'));
 </script>
 
 <script type="module">
@@ -319,53 +506,70 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL = 'https://moljurikrtftxbexptrq.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_v4KEg3UdCNaypL_tTqrx1w_eClfbgUX';
-
 const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-/* ---------- 유틸 ---------- */
 const $ = id => document.getElementById(id);
 
+let me = null;          // 내 프로필
+let boards = [];        // 게시판 목록
+let zone = 'room';      // room | info
+let boardFilter = null; // null = 전체
+let likedSet = new Set();
+
+/* ---------- 토스트 ---------- */
 function toast(text, type){
   const t = $('toast');
   t.textContent = text;
   t.className = 'toast on ' + (type || '');
-  clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.className = 'toast ' + (type || ''), 3200);
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.className = 'toast ' + (type || ''), 3000);
 }
 
+function screen(name){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+  $(name + 'Screen').classList.add('on');
+}
 
-
-/* 흔한 에러 메시지 한글로 */
 function ko(msg){
   const m = (msg || '').toLowerCase();
   if(m.includes('invalid login')) return '이메일이나 비밀번호가 맞지 않아요';
   if(m.includes('already registered') || m.includes('already been registered')) return '이미 가입된 이메일이에요';
   if(m.includes('email not confirmed')) return '메일함에서 인증을 먼저 완료해주세요';
-  if(m.includes('duplicate key') && m.includes('handle')) return '이미 사용 중인 닉네임이에요';
+  if(m.includes('duplicate key')) return '이미 사용 중이에요';
   if(m.includes('password')) return '비밀번호는 8자 이상이어야 해요';
   if(m.includes('invalid email') || m.includes('valid email')) return '이메일 형식을 확인해주세요';
   if(m.includes('rate limit') || m.includes('too many')) return '잠시 후 다시 시도해주세요';
-  return msg || '문제가 생겼어요. 다시 시도해주세요';
+  if(m.includes('failed to fetch')) return '인터넷 연결을 확인해주세요';
+  return msg || '문제가 생겼어요';
 }
 
-/* 닉네임 → 핸들 */
-function makeHandle(nick){
-  const base = nick.toLowerCase().replace(/[^a-z0-9가-힣]/g, '');
-  const rand = Math.random().toString(36).slice(2, 6);
-  return (base ? base.slice(0, 8) : 'ribbon') + '_' + rand;
+function timeAgo(iso){
+  const s = Math.floor((Date.now() - new Date(iso)) / 1000);
+  if(s < 60) return '방금';
+  if(s < 3600) return Math.floor(s/60) + '분 전';
+  if(s < 86400) return Math.floor(s/3600) + '시간 전';
+  if(s < 604800) return Math.floor(s/86400) + '일 전';
+  return new Date(iso).toLocaleDateString('ko-KR', { month:'long', day:'numeric' });
 }
 
-/* ---------- 회원가입: 실시간 체크 ---------- */
+function esc(s){
+  return (s || '').replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* 영문 핸들 만들기 */
+function makeHandle(){
+  return 'ribbon_' + Math.random().toString(36).slice(2, 9);
+}
+
+/* ================= 회원가입 실시간 체크 ================= */
 $('su_nick').addEventListener('input', () => {
-  const v = $('su_nick').value.trim();
-  const el = $('su_nick'), m = $('nickMsg');
+  const v = $('su_nick').value.trim(), el = $('su_nick'), m = $('nickMsg');
   if(!v){ el.className = 'input'; m.className = 'msg'; return; }
   if(v.length < 2){
-    el.className = 'input err';
-    m.className = 'msg bad show'; m.textContent = '2자 이상 입력해주세요';
+    el.className = 'input err'; m.className = 'msg bad show'; m.textContent = '2자 이상 입력해주세요';
   } else {
-    el.className = 'input ok';
-    m.className = 'msg good show'; m.textContent = '좋은 닉네임이에요!';
+    el.className = 'input ok'; m.className = 'msg good show'; m.textContent = '좋은 닉네임이에요!';
   }
 });
 
@@ -379,23 +583,16 @@ $('su_pw').addEventListener('input', () => {
   $('pwMsg').classList.toggle('show', v.length > 0 && v.length < 8);
   matchPw();
 });
-
 $('su_pw2').addEventListener('input', matchPw);
 
 function matchPw(){
   const a = $('su_pw').value, b = $('su_pw2').value;
   const el = $('su_pw2'), m = $('pw2Msg');
   if(!b){ el.className = 'input'; m.className = 'msg'; return; }
-  if(a === b){
-    el.className = 'input ok';
-    m.className = 'msg good show'; m.textContent = '비밀번호가 일치해요';
-  } else {
-    el.className = 'input err';
-    m.className = 'msg bad show'; m.textContent = '비밀번호가 달라요';
-  }
+  if(a === b){ el.className = 'input ok'; m.className = 'msg good show'; m.textContent = '비밀번호가 일치해요'; }
+  else { el.className = 'input err'; m.className = 'msg bad show'; m.textContent = '비밀번호가 달라요'; }
 }
 
-/* ---------- 약관 ---------- */
 $('termAll').addEventListener('click', () => {
   const on = !$('termAll').querySelector('.box').classList.contains('on');
   document.querySelectorAll('.terms .box').forEach(b => b.classList.toggle('on', on));
@@ -408,66 +605,55 @@ document.querySelectorAll('.term-row.t1').forEach(row => {
   });
 });
 
-/* ---------- 회원가입 ---------- */
+/* ================= 인증 ================= */
 $('signupBtn').addEventListener('click', async () => {
   const email = $('su_email').value.trim();
-  const nick  = $('su_nick').value.trim();
-  const pw    = $('su_pw').value;
-  const pw2   = $('su_pw2').value;
+  const nick = $('su_nick').value.trim();
+  const pw = $('su_pw').value, pw2 = $('su_pw2').value;
 
   if(!email) return toast('이메일을 입력해주세요', 'bad');
   if(nick.length < 2) return toast('닉네임을 2자 이상 입력해주세요', 'bad');
   if(pw.length < 8) return toast('비밀번호는 8자 이상이어야 해요', 'bad');
   if(pw !== pw2) return toast('비밀번호가 일치하지 않아요', 'bad');
 
-  const required = [...document.querySelectorAll('.term-row.t1')].slice(0, 3);
-  if(!required.every(r => r.querySelector('.box').classList.contains('on')))
+  const req = [...document.querySelectorAll('.term-row.t1')].slice(0, 3);
+  if(!req.every(r => r.querySelector('.box').classList.contains('on')))
     return toast('필수 약관에 동의해주세요', 'bad');
 
   const btn = $('signupBtn');
   btn.disabled = true; btn.textContent = '가입하는 중...';
 
   const { data, error } = await db.auth.signUp({
-    email,
-    password: pw,
-    options: { data: { nickname: nick, handle: makeHandle(nick) } }
+    email, password: pw,
+    options: { data: { nickname: nick, handle: makeHandle() } }
   });
 
   btn.disabled = false; btn.textContent = '가입하고 시작하기';
-
   if(error) return toast(ko(error.message), 'bad');
 
-  if(data.session){
-    toast('가입 완료! 어서오세요 🎀', 'good');
-    showDone(data.user);
-  } else {
+  if(data.session){ toast('가입 완료! 어서오세요 🎀', 'good'); enter(); }
+  else {
     toast('인증 메일을 보냈어요. 메일함을 확인해주세요 🎀', 'good');
-    setTimeout(() => go('login'), 1200);
+    setTimeout(() => authPage('login'), 1200);
   }
 });
 
-/* ---------- 로그인 ---------- */
 $('loginBtn').addEventListener('click', async () => {
-  const email = $('li_email').value.trim();
-  const pw = $('li_pw').value;
+  const email = $('li_email').value.trim(), pw = $('li_pw').value;
   if(!email || !pw) return toast('이메일과 비밀번호를 입력해주세요', 'bad');
 
   const btn = $('loginBtn');
   btn.disabled = true; btn.textContent = '로그인 중...';
-
-  const { data, error } = await db.auth.signInWithPassword({ email, password: pw });
-
+  const { error } = await db.auth.signInWithPassword({ email, password: pw });
   btn.disabled = false; btn.textContent = '로그인';
 
   if(error) return toast(ko(error.message), 'bad');
   toast('어서오세요 🎀', 'good');
-  showDone(data.user);
+  enter();
 });
 
-/* 엔터키로 로그인 */
 $('li_pw').addEventListener('keydown', e => { if(e.key === 'Enter') $('loginBtn').click(); });
 
-/* ---------- 비밀번호 재설정 ---------- */
 $('resetBtn').addEventListener('click', async () => {
   const email = $('li_email').value.trim();
   if(!email) return toast('이메일을 먼저 입력해주세요', 'bad');
@@ -476,30 +662,275 @@ $('resetBtn').addEventListener('click', async () => {
   toast('비밀번호 재설정 메일을 보냈어요', 'good');
 });
 
-/* ---------- 로그아웃 ---------- */
 $('logoutBtn').addEventListener('click', async () => {
   await db.auth.signOut();
+  me = null; likedSet.clear();
   $('li_email').value = ''; $('li_pw').value = '';
+  screen('auth'); authPage('login');
   toast('로그아웃했어요');
-  go('login');
 });
 
-/* ---------- 로그인 후 화면 ---------- */
-async function showDone(user){
-  go('done');
-  $('doneEmail').textContent = user.email;
-  const { data } = await db.from('profiles').select('nickname, handle').eq('id', user.id).single();
-  if(data){
-    $('doneNick').textContent = data.nickname;
-    $('doneHandle').textContent = '@' + data.handle;
+/* ================= 진입 ================= */
+async function enter(){
+  const { data: s } = await db.auth.getSession();
+  if(!s.session){ screen('auth'); return; }
+
+  const { data: prof } = await db
+    .from('profiles').select('*').eq('id', s.session.user.id).single();
+
+  me = { ...prof, email: s.session.user.email };
+
+  if(!boards.length){
+    const { data: b } = await db.from('boards').select('*').order('sort_order');
+    boards = b || [];
+    buildBoardChips();
+    buildWriteChips();
+  }
+
+  await loadLiked();
+  screen('home');
+  loadFeed();
+}
+
+async function loadLiked(){
+  if(!me) return;
+  const { data } = await db.from('likes').select('post_id').eq('user_id', me.id);
+  likedSet = new Set((data || []).map(r => r.post_id));
+}
+
+/* ================= 게시판 칩 ================= */
+function buildBoardChips(){
+  render();
+  function render(){
+    const bar = $('subbar');
+    const list = boards.filter(b => b.zone === zone);
+    bar.innerHTML = '';
+
+    const all = document.createElement('button');
+    all.className = 'chip' + (zone === 'info' ? ' g' : '') + (boardFilter === null ? ' on' : '');
+    all.textContent = '전체';
+    all.addEventListener('click', () => { boardFilter = null; buildBoardChips(); loadFeed(); });
+    bar.appendChild(all);
+
+    list.forEach(b => {
+      const c = document.createElement('button');
+      c.className = 'chip' + (zone === 'info' ? ' g' : '') + (boardFilter === b.id ? ' on' : '');
+      c.textContent = b.label;
+      c.addEventListener('click', () => { boardFilter = b.id; buildBoardChips(); loadFeed(); });
+      bar.appendChild(c);
+    });
   }
 }
 
-/* ---------- 시작할 때 로그인 상태 확인 ---------- */
-(async () => {
-  const { data } = await db.auth.getSession();
-  if(data.session) showDone(data.session.user);
-})();
+$('zRoom').addEventListener('click', () => {
+  zone = 'room'; boardFilter = null;
+  $('zRoom').classList.add('on'); $('zInfo').classList.remove('on');
+  buildBoardChips(); loadFeed();
+});
+$('zInfo').addEventListener('click', () => {
+  zone = 'info'; boardFilter = null;
+  $('zInfo').classList.add('on'); $('zRoom').classList.remove('on');
+  buildBoardChips(); loadFeed();
+});
+
+$('refreshBtn').addEventListener('click', () => loadFeed());
+
+/* ================= 피드 ================= */
+async function loadFeed(){
+  const feed = $('feed');
+  feed.innerHTML = '<div class="loading">불러오는 중...</div>';
+
+  const zoneBoards = boards.filter(b => b.zone === zone).map(b => b.id);
+  const targets = boardFilter ? [boardFilter] : zoneBoards;
+
+  let q = db.from('posts')
+    .select('*, profiles(nickname, handle, avatar_emoji), boards(label, zone)')
+    .in('board_id', targets)
+    .order('created_at', { ascending:false })
+    .limit(50);
+
+  const { data, error } = await q;
+
+  if(error){ feed.innerHTML = '<div class="loading">' + esc(ko(error.message)) + '</div>'; return; }
+
+  if(!data || !data.length){
+    feed.innerHTML = `
+      <div class="empty">
+        <span class="e">🎀</span>
+        <h3>아직 글이 없어요</h3>
+        <p>${zone === 'info' ? '유용한 정보를 나눠주세요.' : '첫 글을 남겨보는 건 어때요?'}</p>
+        <button id="emptyWrite">글 쓰러 가기</button>
+      </div>`;
+    $('emptyWrite').addEventListener('click', () => openWrite());
+    return;
+  }
+
+  feed.innerHTML = '';
+  data.forEach(p => feed.appendChild(postCard(p)));
+}
+
+function postCard(p){
+  const el = document.createElement('div');
+  el.className = 'post' + (p.boards?.zone === 'info' ? ' info' : '');
+  const liked = likedSet.has(p.id);
+  const mine = me && p.author_id === me.id;
+
+  el.innerHTML = `
+    <div class="p-head">
+      <div class="avatar">${esc(p.profiles?.avatar_emoji || '🌷')}</div>
+      <div>
+        <div class="p-name">${esc(p.profiles?.nickname || '알 수 없음')}</div>
+        <div class="p-meta">${esc(p.boards?.label || '')} · ${timeAgo(p.created_at)}</div>
+      </div>
+      ${mine ? '<button class="p-del">⋯</button>' : ''}
+    </div>
+    <div class="p-title">${esc(p.title)}</div>
+    <p class="p-text">${esc(p.content)}</p>
+    <div class="p-acts">
+      <button class="act like${liked ? ' liked' : ''}">🎀 <b>${p.like_count || 0}</b></button>
+    </div>`;
+
+  el.querySelector('.like').addEventListener('click', e => {
+    e.stopPropagation();
+    toggleLike(p.id, el.querySelector('.like'));
+  });
+
+  if(mine){
+    el.querySelector('.p-del').addEventListener('click', async e => {
+      e.stopPropagation();
+      if(!confirm('이 글을 삭제할까요?')) return;
+      const { error } = await db.from('posts').delete().eq('id', p.id);
+      if(error) return toast(ko(error.message), 'bad');
+      el.remove();
+      toast('글을 삭제했어요');
+    });
+  }
+
+  return el;
+}
+
+/* ================= 좋아요 ================= */
+async function toggleLike(postId, btn){
+  if(!me) return;
+  const b = btn.querySelector('b');
+  const wasLiked = likedSet.has(postId);
+  let n = parseInt(b.textContent) || 0;
+
+  // 화면 먼저 반영
+  btn.classList.toggle('liked', !wasLiked);
+  b.textContent = Math.max(0, n + (wasLiked ? -1 : 1));
+
+  let error;
+  if(wasLiked){
+    likedSet.delete(postId);
+    ({ error } = await db.from('likes').delete()
+      .eq('user_id', me.id).eq('post_id', postId));
+  } else {
+    likedSet.add(postId);
+    ({ error } = await db.from('likes')
+      .insert({ user_id: me.id, post_id: postId, comment_id: 0 }));
+  }
+
+  if(error){
+    // 실패하면 되돌리기
+    btn.classList.toggle('liked', wasLiked);
+    b.textContent = n;
+    if(wasLiked) likedSet.add(postId); else likedSet.delete(postId);
+    return toast(ko(error.message), 'bad');
+  }
+
+  // 카운트 저장
+  const newCount = parseInt(b.textContent) || 0;
+  await db.from('posts').update({ like_count: newCount }).eq('id', postId);
+}
+
+/* ================= 글쓰기 ================= */
+let writeBoard = null;
+
+function buildWriteChips(){
+  const wrap = $('wBoards');
+  wrap.innerHTML = '<span class="board-label">게시판</span>';
+  boards.forEach(b => {
+    const c = document.createElement('button');
+    c.className = 'chip' + (b.zone === 'info' ? ' g' : '');
+    c.textContent = (b.zone === 'info' ? '📌 ' : '') + b.label;
+    c.addEventListener('click', () => {
+      writeBoard = b.id;
+      wrap.querySelectorAll('.chip').forEach(x => x.classList.remove('on'));
+      c.classList.add('on');
+    });
+    wrap.appendChild(c);
+  });
+}
+
+function openWrite(){
+  writeBoard = null;
+  $('wTitle').value = ''; $('wContent').value = ''; $('wLen').textContent = '0';
+  $('wBoards').querySelectorAll('.chip').forEach(x => x.classList.remove('on'));
+  screen('write');
+}
+
+$('wContent').addEventListener('input', () => {
+  $('wLen').textContent = $('wContent').value.length;
+});
+
+$('wCancel').addEventListener('click', () => { screen('home'); });
+
+$('wSubmit').addEventListener('click', async () => {
+  const title = $('wTitle').value.trim();
+  const content = $('wContent').value.trim();
+
+  if(!writeBoard) return toast('게시판을 골라주세요', 'bad');
+  if(!title) return toast('제목을 입력해주세요', 'bad');
+  if(!content) return toast('내용을 입력해주세요', 'bad');
+
+  const btn = $('wSubmit');
+  btn.disabled = true; btn.textContent = '올리는 중';
+
+  const { error } = await db.from('posts').insert({
+    author_id: me.id, board_id: writeBoard, title, content
+  });
+
+  btn.disabled = false; btn.textContent = '올리기';
+  if(error) return toast(ko(error.message), 'bad');
+
+  const b = boards.find(x => x.id === writeBoard);
+  zone = b.zone; boardFilter = null;
+  $('zRoom').classList.toggle('on', zone === 'room');
+  $('zInfo').classList.toggle('on', zone === 'info');
+  buildBoardChips();
+
+  toast('글을 올렸어요 🎀', 'good');
+  screen('home');
+  loadFeed();
+});
+
+/* ================= 내 정보 ================= */
+async function openMe(){
+  screen('me');
+  if(!me) return;
+  $('meAv').textContent = me.avatar_emoji || '🌷';
+  $('meName').textContent = me.nickname;
+  $('meHandle').textContent = '@' + me.handle;
+  $('meEmail').textContent = me.email;
+
+  const { data } = await db.from('posts').select('like_count').eq('author_id', me.id);
+  $('mePosts').textContent = (data || []).length;
+  $('meLikes').textContent = (data || []).reduce((s, p) => s + (p.like_count || 0), 0);
+}
+
+/* ================= 하단 네비 ================= */
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const go = item.dataset.go;
+    if(go === 'home'){ screen('home'); loadFeed(); }
+    else if(go === 'write') openWrite();
+    else if(go === 'me') openMe();
+  });
+});
+
+/* ================= 시작 ================= */
+enter();
 </script>
 </body>
 </html>
