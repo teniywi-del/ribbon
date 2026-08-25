@@ -355,6 +355,12 @@
   .add-btn .plus{ font-size:18px; color:var(--ribbon); line-height:1; }
   .add-btn .num{ font-size:9.5px; color:var(--sub); }
   .hint{ font-size:11px; color:var(--sub); margin-top:10px; line-height:1.6; }
+  .thumb .up{
+    position:absolute; inset:0; border-radius:12px;
+    background:rgba(255,255,255,.8);
+    display:flex; align-items:center; justify-content:center;
+    font-size:9.5px; color:var(--ribbon-deep); font-weight:700;
+  }
 
   /* 피드 미디어 */
   .p-media{ display:grid; gap:5px; margin-top:11px; }
@@ -1148,7 +1154,8 @@
         <p class="hint">
           · 사진은 최대 <b>10장</b> (장당 20MB 이하)<br>
           · 동영상은 <b>1개</b>까지 (50MB 이하)<br>
-          · 첫 번째 파일이 <b>대표 이미지</b>로 피드에 보여요
+          · 첫 번째 파일이 <b>대표 이미지</b>로 피드에 보여요<br>
+          · 큰 사진은 자동으로 용량만 줄여서 올라가요 (화질은 그대로)
         </p>
       </div>
     </div>
@@ -1920,15 +1927,61 @@ $('filePick').addEventListener('change', e => {
   renderMedia();
 });
 
+/* 사진 압축 (긴 변 2048px, 품질 90%) */
+const MAX_SIDE = 2048;
+const QUALITY = 0.9;
+
+function compressImage(file){
+  return new Promise(resolve => {
+    // 이미 충분히 작거나 GIF면 원본 유지 (GIF는 압축하면 움직임이 사라져요)
+    if(file.size < 300 * 1024 || file.type === 'image/gif'){
+      return resolve(file);
+    }
+
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width: w, height: h } = img;
+
+      if(Math.max(w, h) > MAX_SIDE){
+        const r = MAX_SIDE / Math.max(w, h);
+        w = Math.round(w * r);
+        h = Math.round(h * r);
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, w, h);
+
+      canvas.toBlob(blob => {
+        // 압축이 오히려 커지면 원본 사용
+        if(!blob || blob.size >= file.size) return resolve(file);
+        resolve(new File([blob], file.name.replace(/\.\w+$/, '') + '.jpg', { type:'image/jpeg' }));
+      }, 'image/jpeg', QUALITY);
+    };
+
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+
 /* 업로드 */
 async function uploadMedia(postId){
   for(let i = 0; i < picked.length; i++){
     const p = picked[i];
-    const ext = (p.file.name.split('.').pop() || 'jpg').toLowerCase();
+
+    // 사진은 압축, 영상은 원본
+    const file = p.kind === 'image' ? await compressImage(p.file) : p.file;
+
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
     const path = `${me.id}/${postId}_${Date.now()}_${i}.${ext}`;
 
     const { error: upErr } = await db.storage.from('posts')
-      .upload(path, p.file, { cacheControl: '3600', upsert: false });
+      .upload(path, file, { cacheControl: '3600', upsert: false });
     if(upErr) throw upErr;
 
     const { data: pub } = db.storage.from('posts').getPublicUrl(path);
@@ -1971,6 +2024,7 @@ $('wSubmit').addEventListener('click', async () => {
 
   if(picked.length){
     btn.textContent = '사진 올리는 중';
+    toast('사진을 정리해서 올리는 중이에요 🎀');
     try{
       await uploadMedia(post.id);
     }catch(e){
@@ -2474,6 +2528,32 @@ async function openFollowList(kind){
   });
 }
 
+/* 프로필 사진은 512px로 (동그랗게 작게 보이니까) */
+function compressAvatar(file){
+  return new Promise(resolve => {
+    if(file.type === 'image/gif') return resolve(file);
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const side = Math.min(512, Math.max(img.width, img.height));
+      const r = side / Math.max(img.width, img.height);
+      const w = Math.round(img.width * r), h = Math.round(img.height * r);
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      const ctx = c.getContext('2d');
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, w, h);
+      c.toBlob(b => {
+        if(!b || b.size >= file.size) return resolve(file);
+        resolve(new File([b], 'avatar.jpg', { type:'image/jpeg' }));
+      }, 'image/jpeg', 0.9);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+
 /* ---------- 프로필 수정 ---------- */
 const EMOJIS = ['🌷','🎀','🐰','🍰','☁️','🌸','✏️','🎨','💗','⭐','🌙','🧸','🍓','🕊️','🫧','🪞'];
 
@@ -2551,10 +2631,11 @@ $('edSave').addEventListener('click', async () => {
   if(avNewFile){
     btn.textContent = '사진 올리는 중';
     try{
-      const ext = (avNewFile.name.split('.').pop() || 'jpg').toLowerCase();
+      const avFile = await compressAvatar(avNewFile);
+      const ext = (avFile.name.split('.').pop() || 'jpg').toLowerCase();
       const path = `${me.id}/avatar_${Date.now()}.${ext}`;
       const { error: upErr } = await db.storage.from('avatars')
-        .upload(path, avNewFile, { cacheControl:'3600', upsert:true });
+        .upload(path, avFile, { cacheControl:'3600', upsert:true });
       if(upErr) throw upErr;
       const { data: pub } = db.storage.from('avatars').getPublicUrl(path);
       avatarUrl = pub.publicUrl;
