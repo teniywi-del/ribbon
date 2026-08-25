@@ -824,7 +824,40 @@
   .row.mine .bubble.cloud::before{ right:38px; background:var(--ribbon); }
   .row.mine .bubble.cloud::after{ right:18px; background:var(--ribbon); }
 
-  .row-time{ font-size:10px; color:var(--sub); margin:3px 4px 8px; }
+  .row-time{
+    font-size:10px; color:var(--sub); margin:3px 4px 8px;
+    display:flex; align-items:center; gap:5px;
+  }
+  .read-mark{ color:var(--ribbon-deep); font-weight:700; font-size:9.5px; }
+
+  /* 작성 중 */
+  .typing{
+    display:none; align-items:center; gap:7px;
+    padding:6px 16px 10px; flex-shrink:0;
+    font-size:11.5px; color:var(--sub);
+  }
+  .typing.on{ display:flex; }
+  .dots{ display:flex; gap:3px; }
+  .dots i{
+    width:5px; height:5px; border-radius:50%;
+    background:var(--ribbon); display:block;
+    animation:bounce 1.2s infinite;
+  }
+  .dots i:nth-child(2){ animation-delay:.15s; }
+  .dots i:nth-child(3){ animation-delay:.3s; }
+  @keyframes bounce{
+    0%,60%,100%{ transform:translateY(0); opacity:.5; }
+    30%{ transform:translateY(-4px); opacity:1; }
+  }
+
+  /* 안 읽은 쪽지 뱃지 */
+  .dm-unread{
+    min-width:18px; height:18px; border-radius:999px;
+    background:var(--ribbon-deep); color:#fff;
+    font-size:9.5px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+    padding:0 5px; flex-shrink:0;
+  }
 
   /* ============ 알림 ============ */
   .nt-tabs{
@@ -1263,6 +1296,10 @@
       <div class="chat-name" id="chatName">-</div>
     </div>
     <div class="chat-scroll" id="chatScroll"></div>
+    <div class="typing" id="typing">
+      <div class="dots"><i></i><i></i><i></i></div>
+      <span id="typingText">입력 중</span>
+    </div>
     <div class="c-input">
       <input class="c-field" id="mField" placeholder="메시지를 입력해주세요 🎀" maxlength="1000">
       <button class="c-send" id="mSend">➤</button>
@@ -1362,12 +1399,19 @@
 
       <div class="field">
         <label class="label">공개 범위</label>
-        <div class="opt-row">
+        <div class="opt-row" style="margin-bottom:8px">
           <div class="opt-main">
             <div class="opt-name">팔로잉 목록 비공개</div>
             <div class="opt-desc">내가 팔로우한 사람을 나만 볼 수 있어요</div>
           </div>
           <button class="sw" id="edHide"></button>
+        </div>
+        <div class="opt-row">
+          <div class="opt-main">
+            <div class="opt-name">읽음 표시 끄기</div>
+            <div class="opt-desc">내가 읽었는지 상대에게 안 보여요<br>대신 상대의 읽음도 볼 수 없어요</div>
+          </div>
+          <button class="sw" id="edRead"></button>
         </div>
       </div>
 
@@ -1433,7 +1477,10 @@ function toast(text, type){
 }
 
 function screen(name){
-  if(name !== 'chat' && typeof chatTimer !== 'undefined') clearInterval(chatTimer);
+  if(name !== 'chat'){
+    if(typeof chatTimer !== 'undefined') clearInterval(chatTimer);
+    if(typeof unsubscribeChat === 'function') unsubscribeChat();
+  }
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
   $(name + 'Screen').classList.add('on');
 }
@@ -2605,11 +2652,13 @@ function openEdit(){
   $('edNick').value = me.nickname || '';
   $('edBio').value = me.bio || '';
   $('edHide').classList.toggle('on', !!me.hide_following);
+  $('edRead').classList.toggle('on', !!me.hide_read_receipt);
   drawAvPreview();
   $('editSheet').classList.add('on');
 }
 
 $('edHide').addEventListener('click', () => $('edHide').classList.toggle('on'));
+$('edRead').addEventListener('click', () => $('edRead').classList.toggle('on'));
 
 $('edCancel').addEventListener('click', () => $('editSheet').classList.remove('on'));
 $('editSheet').addEventListener('click', e => {
@@ -2648,16 +2697,18 @@ $('edSave').addEventListener('click', async () => {
   }
 
   const hideFol = $('edHide').classList.contains('on');
+  const hideRead = $('edRead').classList.contains('on');
 
   const { error } = await db.from('profiles')
-    .update({ nickname: nick, bio, avatar_emoji: emoji, avatar_url: avatarUrl, hide_following: hideFol })
+    .update({ nickname: nick, bio, avatar_emoji: emoji, avatar_url: avatarUrl,
+              hide_following: hideFol, hide_read_receipt: hideRead })
     .eq('id', me.id);
 
   btn.disabled = false; btn.textContent = '저장';
   if(error) return toast(ko(error.message), 'bad');
 
   me.nickname = nick; me.bio = bio; me.avatar_emoji = emoji;
-  me.avatar_url = avatarUrl; me.hide_following = hideFol;
+  me.avatar_url = avatarUrl; me.hide_following = hideFol; me.hide_read_receipt = hideRead;
   avNewFile = null; avRemoved = false;
   $('editSheet').classList.remove('on');
   toast('프로필을 수정했어요 🎀', 'good');
@@ -2989,7 +3040,7 @@ async function openDM(){
   box.innerHTML = '<div class="loading">불러오는 중...</div>';
 
   const { data, error } = await db.from('conversations')
-    .select('*, a:profiles!conversations_user_a_fkey(id, nickname, avatar_emoji, avatar_url, role), b:profiles!conversations_user_b_fkey(id, nickname, avatar_emoji, avatar_url, role)')
+    .select('*, a:profiles!conversations_user_a_fkey(id, nickname, avatar_emoji, avatar_url, role, hide_read_receipt), b:profiles!conversations_user_b_fkey(id, nickname, avatar_emoji, avatar_url, role, hide_read_receipt)')
     .or(`user_a.eq.${me.id},user_b.eq.${me.id}`)
     .order('last_message_at', { ascending:false });
 
@@ -3005,9 +3056,24 @@ async function openDM(){
     return;
   }
 
+  // 안 읽은 개수 세기
+  const unreadMap = {};
+  const convIds = data.map(c => c.id);
+  if(convIds.length){
+    const { data: un } = await db.from('messages')
+      .select('conversation_id')
+      .in('conversation_id', convIds)
+      .neq('sender_id', me.id)
+      .is('read_at', null);
+    (un || []).forEach(m => {
+      unreadMap[m.conversation_id] = (unreadMap[m.conversation_id] || 0) + 1;
+    });
+  }
+
   box.innerHTML = '';
   data.forEach((c, i) => {
     const other = c.user_a === me.id ? c.b : c.a;
+    const unread = unreadMap[c.id] || 0;
     const row = document.createElement('div');
     row.className = 'dm-row';
     row.innerHTML = `
@@ -3018,7 +3084,8 @@ async function openDM(){
           <span class="dm-time">${c.last_message_at ? timeAgo(c.last_message_at) : ''}</span>
         </div>
         <div class="dm-last">${esc(c.last_message || '대화를 시작해보세요')}</div>
-      </div>`;
+      </div>
+      ${unread ? `<span class="dm-unread">${unread > 99 ? '99+' : unread}</span>` : ''}`;
     row.addEventListener('click', () => openChat(c.id, other));
     box.appendChild(row);
 
@@ -3051,20 +3118,76 @@ async function startChat(otherUser){
   openChat(conv.id, otherUser);
 }
 
+let rtChannel = null;
+let typingTimer = null;
+let hideTypingTimer = null;
+
 async function openChat(convId, other){
   curConv = { id: convId, other };
   screen('chat');
   $('chatAv').innerHTML = avatarInner(other);
   $('chatName').textContent = other?.nickname || '대화';
   $('chatScroll').innerHTML = '<div class="loading">불러오는 중...</div>';
-  await loadMessages(true);
+  $('typing').classList.remove('on');
 
-  clearInterval(chatTimer);
-  chatTimer = setInterval(() => loadMessages(false), 4000);
+  await loadMessages(true);
+  await markRead();
+  subscribeChat();
+}
+
+/* 실시간 구독 */
+function subscribeChat(){
+  unsubscribeChat();
+  if(!curConv) return;
+
+  rtChannel = db.channel('chat_' + curConv.id, {
+    config: { presence: { key: me.id } }
+  });
+
+  // 새 메시지 / 읽음 갱신
+  rtChannel.on('postgres_changes',
+    { event: '*', schema: 'public', table: 'messages',
+      filter: 'conversation_id=eq.' + curConv.id },
+    async () => { await loadMessages(true); await markRead(); }
+  );
+
+  // 상대가 입력 중
+  rtChannel.on('broadcast', { event: 'typing' }, payload => {
+    if(payload.payload?.userId === me.id) return;
+    $('typingText').textContent = (curConv.other?.nickname || '상대') + '님이 입력 중';
+    $('typing').classList.add('on');
+    clearTimeout(hideTypingTimer);
+    hideTypingTimer = setTimeout(() => $('typing').classList.remove('on'), 3000);
+  });
+
+  rtChannel.subscribe();
+}
+
+function unsubscribeChat(){
+  if(rtChannel){ db.removeChannel(rtChannel); rtChannel = null; }
+  clearTimeout(hideTypingTimer);
+}
+
+/* 입력 중 알리기 */
+$('mField').addEventListener('input', () => {
+  if(!rtChannel || !curConv) return;
+  if(typingTimer) return;                 // 1.5초에 한 번만 보냄
+  rtChannel.send({ type:'broadcast', event:'typing', payload:{ userId: me.id } });
+  typingTimer = setTimeout(() => { typingTimer = null; }, 1500);
+});
+
+/* 받은 메시지 읽음 처리 */
+async function markRead(){
+  if(!curConv || !me) return;
+  await db.from('messages')
+    .update({ read_at: new Date().toISOString() })
+    .eq('conversation_id', curConv.id)
+    .neq('sender_id', me.id)
+    .is('read_at', null);
 }
 
 $('chatBack').addEventListener('click', () => {
-  clearInterval(chatTimer);
+  unsubscribeChat();
   curConv = null;
   openDM();
 });
@@ -3077,15 +3200,14 @@ async function loadMessages(force){
     .select('*')
     .eq('conversation_id', curConv.id)
     .order('created_at', { ascending:true })
-    .limit(200);
+    .limit(300);
 
   if(error){ if(force) $('chatScroll').innerHTML = '<div class="loading">' + esc(ko(error.message)) + '</div>'; return; }
 
   const list = data || [];
-  if(!force && list.length === lastMsgCount) return;
-  lastMsgCount = list.length;
-
   const box = $('chatScroll');
+  const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+
   box.innerHTML = '';
 
   if(!list.length){
@@ -3093,9 +3215,10 @@ async function loadMessages(force){
     return;
   }
 
-  let lastDay = '';
-  let lastSender = null;
-  let lastTime = null;
+  // 읽음 표시를 볼 수 있는지 (둘 중 하나라도 끄면 안 보임)
+  const canSeeRead = !me.hide_read_receipt && !curConv.other?.hide_read_receipt;
+
+  let lastDay = '', lastSender = null;
 
   list.forEach((m, i) => {
     const d = new Date(m.created_at);
@@ -3115,14 +3238,17 @@ async function loadMessages(force){
     row.className = 'row ' + (mine ? 'mine' : 'theirs') + (newGroup ? ' has-cloud' : '');
     row.innerHTML = `<div class="bubble${newGroup ? ' cloud' : ''}">${esc(m.content)}</div>`;
 
-    // 같은 사람이 연속으로 보낸 마지막 메시지에만 시간
     const next = list[i + 1];
     const showTime = !next || next.sender_id !== m.sender_id ||
       new Date(next.created_at).getMinutes() !== d.getMinutes();
+
     if(showTime){
       const t = document.createElement('div');
       t.className = 'row-time';
-      t.textContent = d.toLocaleTimeString('ko-KR', { hour:'numeric', minute:'2-digit' });
+      const readMark = (mine && canSeeRead && m.read_at)
+        ? '<span class="read-mark">읽음</span>' : '';
+      t.innerHTML = readMark +
+        `<span>${d.toLocaleTimeString('ko-KR', { hour:'numeric', minute:'2-digit' })}</span>`;
       row.appendChild(t);
     }
 
@@ -3130,7 +3256,8 @@ async function loadMessages(force){
     lastSender = m.sender_id;
   });
 
-  box.scrollTop = box.scrollHeight;
+  if(force || atBottom) box.scrollTop = box.scrollHeight;
+  lastMsgCount = list.length;
 }
 
 function isToday(d){
@@ -3164,6 +3291,7 @@ async function sendMessage(){
   if(curConv.other) notify(curConv.other.id, 'dm', { preview: text });
 
   $('mField').value = '';
+  $('typing').classList.remove('on');
   await loadMessages(true);
 }
 
