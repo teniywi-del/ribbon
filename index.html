@@ -1762,6 +1762,7 @@ $('resetBtn').addEventListener('click', async () => {
 
 $('edLogout').addEventListener('click', async () => {
   await db.auth.signOut();
+  if(notiChannel){ db.removeChannel(notiChannel); notiChannel = null; }
   me = null; likedSet.clear();
   $('li_email').value = ''; $('li_pw').value = '';
   $('editSheet').classList.remove('on');
@@ -1791,7 +1792,8 @@ async function enter(){
   screen('home');
   loadFeed();
   refreshBadge();
-  setInterval(refreshBadge, 30000);
+  subscribeNoti();
+  setInterval(refreshBadge, 60000);
 }
 
 async function loadFollowing(){
@@ -3328,6 +3330,33 @@ async function notify(userId, kind, opts){
     comment_id: opts?.commentId ?? null,
     preview: opts?.preview ?? null
   });
+}
+
+let notiChannel = null;
+
+function subscribeNoti(){
+  if(notiChannel || !me) return;
+  notiChannel = db.channel('noti_' + me.id);
+  notiChannel.on('postgres_changes',
+    { event:'INSERT', schema:'public', table:'notifications',
+      filter:'user_id=eq.' + me.id },
+    async payload => {
+      refreshBadge();
+      const n = payload.new;
+      const TXT = {
+        like:'누군가 회원님의 글을 좋아해요 🎀',
+        comment:'새 댓글이 달렸어요 💬',
+        reply:'답글이 달렸어요 💬',
+        follow:'새 팔로워가 생겼어요 🎀',
+        dm:'새 쪽지가 왔어요 ✉️',
+        notice:'새 공지가 있어요 📢'
+      };
+      // 알림 화면을 보고 있으면 목록도 갱신
+      if($('notiScreen').classList.contains('on')) openNoti();
+      else toast(TXT[n.kind] || '새 알림이 있어요', 'good');
+    }
+  );
+  notiChannel.subscribe();
 }
 
 async function refreshBadge(){
