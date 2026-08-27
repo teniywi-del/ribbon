@@ -1021,6 +1021,92 @@
   .res-sub{ font-size:11px; color:var(--sub); margin-top:2px; }
   mark{ background:#FCE6EC; color:var(--ribbon-deep); font-weight:700; padding:0 1px; border-radius:3px; }
 
+  /* ============ 신고 / 관리자 ============ */
+  .reason-list{ display:flex; flex-direction:column; gap:7px; }
+  .reason{
+    display:flex; align-items:center; gap:9px;
+    padding:13px 14px; background:#FFFAFC;
+    border:1.5px solid var(--line); border-radius:13px;
+    cursor:pointer; font-size:13px; font-family:inherit;
+    text-align:left; color:var(--text);
+  }
+  .reason.on{
+    border-color:var(--ribbon);
+    background:linear-gradient(180deg,#FCE6EC,#F9D7E1);
+    color:var(--ribbon-deep); font-weight:700;
+  }
+
+  .adm-tabs{
+    display:flex; margin:0 18px 8px; padding:4px;
+    background:linear-gradient(180deg,#FCEDF1,#F9E1E9); border-radius:999px; flex-shrink:0;
+  }
+  .adm-tab{
+    flex:1; font-family:inherit; font-size:12px; color:var(--sub);
+    background:none; border:none; padding:8px 0; border-radius:999px; cursor:pointer;
+  }
+  .adm-tab.on{ background:#fff; color:var(--ribbon-deep); font-weight:700; box-shadow:0 2px 6px rgba(217,113,143,0.18); }
+
+  .rp-card{
+    margin:0 18px 11px; padding:14px;
+    background:#fff; border:1px solid var(--line); border-radius:16px;
+  }
+  .rp-top{ display:flex; align-items:center; gap:7px; margin-bottom:9px; }
+  .rp-kind{
+    font-size:9.5px; font-weight:700; color:#fff;
+    background:linear-gradient(180deg,#E89898,#D97878);
+    padding:3px 8px; border-radius:999px;
+  }
+  .rp-kind.done{ background:linear-gradient(180deg,#A8D5B5,#7FB894); }
+  .rp-kind.ignored{ background:linear-gradient(180deg,#C9C0C3,#A99DA1); }
+  .rp-when{ font-size:10.5px; color:var(--sub); margin-left:auto; }
+  .rp-reason{ font-size:13px; font-weight:700; margin-bottom:5px; }
+  .rp-detail{ font-size:12px; color:var(--sub); line-height:1.6; margin-bottom:8px; white-space:pre-wrap; }
+  .rp-target{
+    font-size:12px; background:#FFFAFC; border-left:2px solid var(--line);
+    padding:8px 10px; border-radius:0 8px 8px 0; line-height:1.6;
+    margin-bottom:10px; cursor:pointer;
+  }
+  .rp-target b{ display:block; margin-bottom:2px; }
+  .rp-acts{ display:flex; gap:7px; }
+  .rp-acts button{
+    flex:1; font-family:inherit; font-size:11.5px; font-weight:700;
+    padding:9px 0; border-radius:999px; cursor:pointer;
+    border:1.5px solid var(--line); background:#fff; color:var(--sub);
+  }
+  .rp-acts .go{ border-color:var(--ribbon); color:var(--ribbon-deep); }
+  .rp-acts .del{ border-color:#E89898; color:#C96B6B; }
+  .rp-acts .ok{ border-color:#A8D5B5; color:#5F9E74; }
+
+  .adm-search{ display:flex; gap:7px; padding:0 18px 12px; }
+  .adm-search input{
+    flex:1; border:1.5px solid var(--line); background:#FFFAFC;
+    border-radius:999px; padding:11px 16px;
+    font-family:inherit; font-size:15px; outline:none;
+  }
+  .adm-urow{
+    display:flex; align-items:center; gap:11px;
+    padding:12px 18px; border-bottom:1px dashed var(--line);
+  }
+  .adm-umain{ flex:1; min-width:0; }
+  .sup{
+    display:inline-flex; align-items:center; gap:3px;
+    font-size:9.5px; font-weight:700; color:#fff;
+    background:linear-gradient(180deg,#F3D394,var(--gold));
+    padding:2.5px 7px; border-radius:999px;
+    box-shadow:0 2px 5px rgba(229,185,120,.35);
+    flex-shrink:0; vertical-align:middle;
+  }
+  .adm-btn{
+    font-family:inherit; font-size:11px; font-weight:700;
+    padding:7px 12px; border-radius:999px; cursor:pointer;
+    border:1.5px solid var(--gold); background:#fff; color:var(--gold-deep);
+    flex-shrink:0;
+  }
+  .adm-btn.on{
+    background:linear-gradient(180deg,#F3D394,var(--gold));
+    color:#fff; border-color:transparent;
+  }
+
   /* ============ 내 정보 ============ */
   .me-wrap{ padding:30px 20px; text-align:center; }
   .me-av{
@@ -1217,6 +1303,7 @@
     <div class="d-head">
       <button class="d-back" id="dBack">←</button>
       <div class="d-title" id="dBoard">글</div>
+      <button class="d-more" id="dReport" style="display:none">🚨</button>
       <button class="d-more" id="dDelete" style="display:none">🗑</button>
     </div>
 
@@ -1372,6 +1459,44 @@
       <button class="nav-item" data-go="noti"><span class="ic">🔔</span>알림<span class="nav-badge">0</span></button>
       <button class="nav-item" data-go="dm"><span class="ic">✉️</span>쪽지</button>
       <button class="nav-item on" data-go="me"><span class="ic">🌷</span>프로필</button>
+    </div>
+  </div>
+
+  <!-- ==================== 관리자 ==================== -->
+  <div class="screen" id="adminScreen">
+    <div class="d-head">
+      <button class="d-back" id="admBack">←</button>
+      <div class="d-title">관리자</div>
+    </div>
+    <div class="adm-tabs">
+      <button class="adm-tab on" data-adm="open">신고 대기</button>
+      <button class="adm-tab" data-adm="closed">처리 완료</button>
+      <button class="adm-tab" data-adm="users">회원 관리</button>
+    </div>
+    <div class="scroll" id="admScroll">
+      <div id="admBody"></div>
+    </div>
+  </div>
+
+  <!-- 신고하기 -->
+  <div class="sheet" id="reportSheet">
+    <div class="sheet-box">
+      <div class="fl-head">
+        <div class="sheet-t" id="rpTitle">신고하기</div>
+        <button class="fl-close" id="rpClose">✕</button>
+      </div>
+      <p style="font-size:12px;color:var(--sub);line-height:1.7;margin-bottom:16px">
+        신고 내용은 관리자만 볼 수 있어요.<br>허위 신고가 반복되면 제한될 수 있어요.
+      </p>
+      <div class="reason-list" id="rpReasons"></div>
+      <div class="field" style="margin-top:14px">
+        <label class="label">자세한 내용 (선택)</label>
+        <textarea class="input" id="rpDetail" maxlength="300" placeholder="어떤 점이 문제인지 알려주세요"></textarea>
+      </div>
+      <div class="sheet-actions">
+        <button class="sheet-cancel" id="rpCancel">취소</button>
+        <button class="sheet-save" id="rpSend">신고 보내기</button>
+      </div>
     </div>
   </div>
 
@@ -1743,7 +1868,7 @@ async function loadFeed(){
   const targets = boardFilter ? [boardFilter] : zoneBoards;
 
   let q = db.from('posts')
-    .select('*, author:profiles!posts_author_id_fkey(id, nickname, handle, avatar_emoji, avatar_url, role), boards(label, zone), post_media(url, kind, sort_order)')
+    .select('*, author:profiles!posts_author_id_fkey(id, nickname, handle, avatar_emoji, avatar_url, role, supporter), boards(label, zone), post_media(url, kind, sort_order)')
     .in('board_id', targets);
 
   if(zone === 'room' && scope === 'fol'){
@@ -1789,8 +1914,12 @@ async function loadFeed(){
 const CROWN = '<svg viewBox="0 0 24 18"><path d="M2 16h20l1.4-11.3a.6.6 0 0 0-1-.5L17 8.4 12.6 1a.7.7 0 0 0-1.2 0L7 8.4 1.6 4.2a.6.6 0 0 0-1 .5L2 16z"/></svg>';
 
 function hostBadge(u, big){
-  if(!u || (u.role !== 'owner' && u.role !== 'admin')) return '';
-  return `<span class="host${big ? ' lg' : ''}">${CROWN}Host</span>`;
+  if(!u) return '';
+  let out = '';
+  if(u.role === 'owner' || u.role === 'admin')
+    out += `<span class="host${big ? ' lg' : ''}">${CROWN}Host</span>`;
+  if(u.supporter) out += `<span class="sup">🎀 후원자</span>`;
+  return out;
 }
 
 function isStaff(u){
@@ -2134,7 +2263,7 @@ async function openDetail(postId){
   cancelReply();
 
   const { data: p, error } = await db.from('posts')
-    .select('*, author:profiles!posts_author_id_fkey(id, nickname, handle, avatar_emoji, avatar_url, role), boards(label, zone), post_media(url, kind, sort_order)')
+    .select('*, author:profiles!posts_author_id_fkey(id, nickname, handle, avatar_emoji, avatar_url, role, supporter), boards(label, zone), post_media(url, kind, sort_order)')
     .eq('id', postId).single();
 
   if(error){ $('dBody').innerHTML = '<div class="loading">' + esc(ko(error.message)) + '</div>'; return; }
@@ -2147,6 +2276,7 @@ async function openDetail(postId){
 
   $('dBoard').textContent = p.boards?.label || '글';
   $('dDelete').style.display = mine ? 'block' : 'none';
+  $('dReport').style.display = (me && p.author_id !== me.id) ? 'block' : 'none';
 
   $('dBody').innerHTML = `
     <span class="d-tag${isInfo ? ' g' : ''}">${esc(p.boards?.label || '')}</span>
@@ -2185,6 +2315,11 @@ async function openDetail(postId){
 }
 
 $('dBack').addEventListener('click', () => { screen('home'); loadFeed(); });
+
+$('dReport').addEventListener('click', () => {
+  if(!curPost) return;
+  openReport({ type:'post', postId: curPost.id, label:'이 글 신고하기' });
+});
 
 $('dDelete').addEventListener('click', async () => {
   if(!curPost) return;
@@ -2228,7 +2363,7 @@ async function loadComments(postId){
   box.innerHTML = '<div class="loading">불러오는 중...</div>';
 
   const { data, error } = await db.from('comments')
-    .select('*, author:profiles!comments_author_id_fkey(id, nickname, avatar_emoji, avatar_url, role)')
+    .select('*, author:profiles!comments_author_id_fkey(id, nickname, avatar_emoji, avatar_url, role, supporter)')
     .eq('post_id', postId)
     .order('created_at', { ascending:true });
 
@@ -2278,6 +2413,7 @@ function commentNode(c, isReply){
       <div class="c-acts">
         ${isReply ? '' : '<button class="c-act reply">답글</button>'}
         ${mine ? '<button class="c-act del">삭제</button>' : ''}
+        ${(me && c.author_id !== me.id) ? '<button class="c-act rep">신고</button>' : ''}
       </div>
     </div>`;
 
@@ -2286,6 +2422,10 @@ function commentNode(c, isReply){
 
   const rb = el.querySelector('.reply');
   if(rb) rb.addEventListener('click', () => startReply(c));
+
+  const repB = el.querySelector('.rep');
+  if(repB) repB.addEventListener('click', () =>
+    openReport({ type:'comment', commentId: c.id, postId: curPost?.id, label:'이 댓글 신고하기' }));
 
   const db_ = el.querySelector('.del');
   if(db_) db_.addEventListener('click', async () => {
@@ -2397,15 +2537,20 @@ async function openProfile(userId){
 
   const btns = $('pfBtns');
   if(mine){
-    btns.innerHTML = '<button class="pf-btn fill" id="pfEdit">프로필 수정</button>';
+    btns.innerHTML = '<button class="pf-btn fill" id="pfEdit">프로필 수정</button>'
+      + (isStaff(me) ? '<button class="pf-btn" id="pfAdmin">관리자</button>' : '');
     $('pfEdit').addEventListener('click', openEdit);
+    if(isStaff(me)) $('pfAdmin').addEventListener('click', openAdmin);
   } else {
     const isFol = followingSet.has(u.id);
     btns.innerHTML =
       `<button class="pf-btn${isFol ? '' : ' fill'}" id="pfFollow">${isFol ? '팔로잉' : '팔로우'}</button>` +
       '<button class="pf-btn" id="pfSoon">메시지</button>';
+    btns.innerHTML += '<button class="pf-btn" id="pfReport" style="flex:0 0 46px">🚨</button>';
     $('pfFollow').addEventListener('click', () => toggleFollow(u.id, $('pfFollow')));
     $('pfSoon').addEventListener('click', () => startChat(u));
+    $('pfReport').addEventListener('click', () =>
+      openReport({ type:'user', userId: u.id, label: u.nickname + '님 신고하기' }));
   }
 
   loadProfileStats(u.id);
@@ -2467,7 +2612,7 @@ async function loadProfileTab(){
 
   const zoneBoards = boards.filter(b => b.zone === pfTab).map(b => b.id);
   const { data, error } = await db.from('posts')
-    .select('*, author:profiles!posts_author_id_fkey(id, nickname, handle, avatar_emoji, avatar_url, role), boards(label, zone), post_media(url, kind, sort_order)')
+    .select('*, author:profiles!posts_author_id_fkey(id, nickname, handle, avatar_emoji, avatar_url, role, supporter), boards(label, zone), post_media(url, kind, sort_order)')
     .eq('author_id', pfUser.id)
     .in('board_id', zoneBoards)
     .order('created_at', { ascending:false });
@@ -2521,6 +2666,232 @@ async function toggleFollow(targetId, btn){
   loadProfileStats(targetId);
 }
 
+/* ================= 신고하기 ================= */
+const REASONS = [
+  '스팸 · 광고',
+  '욕설 · 혐오 표현',
+  '음란물 · 부적절한 사진',
+  '도용 · 저작권 침해',
+  '사칭',
+  '기타'
+];
+let rpTarget = null;   // { type, postId?, commentId?, userId?, label }
+let rpReason = null;
+
+function openReport(target){
+  rpTarget = target;
+  rpReason = null;
+  $('rpDetail').value = '';
+  $('rpTitle').textContent = target.label || '신고하기';
+
+  const box = $('rpReasons');
+  box.innerHTML = '';
+  REASONS.forEach(r => {
+    const b = document.createElement('button');
+    b.className = 'reason';
+    b.textContent = r;
+    b.addEventListener('click', () => {
+      box.querySelectorAll('.reason').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      rpReason = r;
+    });
+    box.appendChild(b);
+  });
+
+  $('reportSheet').classList.add('on');
+}
+
+$('rpClose').addEventListener('click', () => $('reportSheet').classList.remove('on'));
+$('rpCancel').addEventListener('click', () => $('reportSheet').classList.remove('on'));
+$('reportSheet').addEventListener('click', e => {
+  if(e.target === $('reportSheet')) $('reportSheet').classList.remove('on');
+});
+
+$('rpSend').addEventListener('click', async () => {
+  if(!rpReason) return toast('신고 이유를 골라주세요', 'bad');
+  const btn = $('rpSend');
+  btn.disabled = true; btn.textContent = '보내는 중...';
+
+  const { error } = await db.from('reports').insert({
+    reporter_id: me.id,
+    target_type: rpTarget.type,
+    post_id: rpTarget.postId ?? null,
+    comment_id: rpTarget.commentId ?? null,
+    target_user_id: rpTarget.userId ?? null,
+    reason: rpReason,
+    detail: $('rpDetail').value.trim() || null
+  });
+
+  btn.disabled = false; btn.textContent = '신고 보내기';
+  if(error) return toast(ko(error.message), 'bad');
+
+  $('reportSheet').classList.remove('on');
+  toast('신고를 접수했어요. 확인 후 조치할게요 🎀', 'good');
+});
+
+/* ================= 관리자 ================= */
+let admTab = 'open';
+
+async function openAdmin(){
+  if(!isStaff(me)) return toast('권한이 없어요', 'bad');
+  screen('admin');
+  loadAdmin();
+}
+
+$('admBack').addEventListener('click', () => openProfile(me.id));
+
+document.querySelectorAll('.adm-tab').forEach(t => {
+  t.addEventListener('click', () => {
+    admTab = t.dataset.adm;
+    document.querySelectorAll('.adm-tab').forEach(x => x.classList.remove('on'));
+    t.classList.add('on');
+    loadAdmin();
+  });
+});
+
+async function loadAdmin(){
+  const box = $('admBody');
+  box.innerHTML = '<div class="loading">불러오는 중...</div>';
+  $('admScroll').scrollTop = 0;
+
+  if(admTab === 'users') return loadAdminUsers();
+
+  const { data, error } = await db.from('reports')
+    .select('*, reporter:profiles!reports_reporter_id_fkey(nickname), target:profiles!reports_target_user_id_fkey(nickname), posts(id, title), comments(id, content)')
+    .eq('status', admTab === 'open' ? 'open' : 'done')
+    .order('created_at', { ascending:false })
+    .limit(50);
+
+  if(error){ box.innerHTML = '<div class="loading">' + esc(ko(error.message)) + '</div>'; return; }
+
+  if(!data || !data.length){
+    box.innerHTML = `
+      <div class="empty">
+        <span class="e">🎀</span>
+        <h3>${admTab === 'open' ? '처리할 신고가 없어요' : '처리한 신고가 없어요'}</h3>
+        <p>${admTab === 'open' ? '평화롭네요!' : ''}</p>
+      </div>`;
+    return;
+  }
+
+  box.innerHTML = '';
+  data.forEach(r => {
+    const el = document.createElement('div');
+    el.className = 'rp-card';
+
+    let targetHtml = '';
+    if(r.posts) targetHtml = `<div class="rp-target" data-post="${r.posts.id}"><b>📄 글</b>${esc(r.posts.title)}</div>`;
+    else if(r.comments) targetHtml = `<div class="rp-target" data-post2="${r.comment_id}"><b>💬 댓글</b>${esc((r.comments.content || '').slice(0, 80))}</div>`;
+    else if(r.target) targetHtml = `<div class="rp-target" data-user="${r.target_user_id}"><b>👤 회원</b>${esc(r.target.nickname)}</div>`;
+    else targetHtml = '<div class="rp-target"><b>삭제된 대상</b>이미 지워졌어요</div>';
+
+    el.innerHTML = `
+      <div class="rp-top">
+        <span class="rp-kind ${r.status === 'done' ? 'done' : ''}">${
+          r.target_type === 'post' ? '글 신고' : r.target_type === 'comment' ? '댓글 신고' : '회원 신고'
+        }</span>
+        <span class="rp-when">${timeAgo(r.created_at)}</span>
+      </div>
+      <div class="rp-reason">${esc(r.reason)}</div>
+      ${r.detail ? `<div class="rp-detail">${esc(r.detail)}</div>` : ''}
+      ${targetHtml}
+      <div class="rp-detail" style="margin:0 0 10px">신고자: ${esc(r.reporter?.nickname || '-')}</div>
+      ${admTab === 'open' ? `
+        <div class="rp-acts">
+          <button class="go">보러가기</button>
+          ${r.post_id ? '<button class="del">글 삭제</button>' : ''}
+          ${r.comment_id ? '<button class="del">댓글 삭제</button>' : ''}
+          <button class="ok">처리 완료</button>
+        </div>` : ''}`;
+
+    const tgt = el.querySelector('.rp-target');
+    const goto = () => {
+      if(r.post_id) openDetail(r.post_id);
+      else if(r.comment_id) toast('댓글이 달린 글로 이동해주세요');
+      else if(r.target_user_id) openProfile(r.target_user_id);
+    };
+    if(tgt) tgt.addEventListener('click', goto);
+
+    const goBtn = el.querySelector('.go');
+    if(goBtn) goBtn.addEventListener('click', goto);
+
+    const delBtn = el.querySelector('.del');
+    if(delBtn) delBtn.addEventListener('click', async () => {
+      const what = r.post_id ? '글' : '댓글';
+      if(!confirm(`이 ${what}을 삭제할까요?`)) return;
+      const table = r.post_id ? 'posts' : 'comments';
+      const id = r.post_id || r.comment_id;
+      const { error } = await db.from(table).delete().eq('id', id);
+      if(error) return toast(ko(error.message), 'bad');
+      await db.from('reports').update({ status:'done' }).eq('id', r.id);
+      toast(what + '을 삭제했어요');
+      loadAdmin();
+    });
+
+    const okBtn = el.querySelector('.ok');
+    if(okBtn) okBtn.addEventListener('click', async () => {
+      await db.from('reports').update({ status:'done' }).eq('id', r.id);
+      toast('처리 완료로 옮겼어요');
+      loadAdmin();
+    });
+
+    box.appendChild(el);
+  });
+}
+
+async function loadAdminUsers(q){
+  const box = $('admBody');
+
+  let query = db.from('profiles')
+    .select('id, nickname, handle, avatar_emoji, avatar_url, role, supporter, created_at')
+    .order('created_at', { ascending:false })
+    .limit(50);
+
+  if(q) query = query.or(`nickname.ilike.%${q}%,handle.ilike.%${q}%`);
+
+  const { data, error } = await query;
+
+  let html = `
+    <div class="adm-search">
+      <input id="admQ" placeholder="닉네임으로 찾기" value="${esc(q || '')}">
+    </div>`;
+
+  if(error){
+    box.innerHTML = html + '<div class="loading">' + esc(ko(error.message)) + '</div>';
+  } else {
+    html += (data || []).map(u => `
+      <div class="adm-urow">
+        <div class="avatar">${avatarInner(u)}</div>
+        <div class="adm-umain">
+          <div class="fl-name">${esc(u.nickname)} ${hostBadge(u)} ${u.supporter ? '<span class="sup">🎀 후원자</span>' : ''}</div>
+          <div class="fl-bio">@${esc(u.handle)}</div>
+        </div>
+        <button class="adm-btn${u.supporter ? ' on' : ''}" data-sup="${u.id}" data-now="${u.supporter ? 1 : 0}">후원자</button>
+      </div>`).join('');
+    box.innerHTML = html;
+  }
+
+  const input = $('admQ');
+  let t = null;
+  input.addEventListener('input', () => {
+    clearTimeout(t);
+    t = setTimeout(() => loadAdminUsers(input.value.trim()), 350);
+  });
+
+  box.querySelectorAll('[data-sup]').forEach(b => {
+    b.addEventListener('click', async () => {
+      const now = b.dataset.now === '1';
+      b.disabled = true;
+      const { error } = await db.from('profiles').update({ supporter: !now }).eq('id', b.dataset.sup);
+      b.disabled = false;
+      if(error) return toast(ko(error.message), 'bad');
+      b.dataset.now = now ? '0' : '1';
+      b.classList.toggle('on', !now);
+      toast(now ? '후원자 뱃지를 뗐어요' : '후원자 뱃지를 달았어요 🎀', now ? '' : 'good');
+    });
+  });
+}
+
 /* ---------- 팔로워 / 팔로잉 목록 ---------- */
 $('plFollowers').addEventListener('click', () => openFollowList('followers'));
 $('plFollowing').addEventListener('click', () => openFollowList('following'));
@@ -2547,10 +2918,10 @@ async function openFollowList(kind){
 
   const q = kind === 'followers'
     ? db.from('follows')
-        .select('u:profiles!follows_follower_id_fkey(id, nickname, handle, bio, avatar_emoji, avatar_url, role)')
+        .select('u:profiles!follows_follower_id_fkey(id, nickname, handle, bio, avatar_emoji, avatar_url, role, supporter)')
         .eq('following_id', pfUser.id)
     : db.from('follows')
-        .select('u:profiles!follows_following_id_fkey(id, nickname, handle, bio, avatar_emoji, avatar_url, role)')
+        .select('u:profiles!follows_following_id_fkey(id, nickname, handle, bio, avatar_emoji, avatar_url, role, supporter)')
         .eq('follower_id', pfUser.id);
 
   const { data, error } = await q.order('created_at', { ascending:false }).limit(100);
@@ -2777,7 +3148,7 @@ async function loadBrowse(){
       .order('comment_count', { ascending:false })
       .limit(5),
     db.from('profiles')
-      .select('id, nickname, handle, bio, avatar_emoji, avatar_url, role')
+      .select('id, nickname, handle, bio, avatar_emoji, avatar_url, role, supporter')
       .order('created_at', { ascending:false })
       .limit(20)
   ]);
@@ -2886,11 +3257,11 @@ async function runSearch(q){
 
   const [uRes, pRes] = await Promise.all([
     db.from('profiles')
-      .select('id, nickname, handle, bio, avatar_emoji, avatar_url, role')
+      .select('id, nickname, handle, bio, avatar_emoji, avatar_url, role, supporter')
       .or(`nickname.ilike.%${q}%,handle.ilike.%${q}%`)
       .limit(10),
     db.from('posts')
-      .select('*, author:profiles!posts_author_id_fkey(id, nickname, handle, avatar_emoji, avatar_url, role), boards(label, zone), post_media(url, kind, sort_order)')
+      .select('*, author:profiles!posts_author_id_fkey(id, nickname, handle, avatar_emoji, avatar_url, role, supporter), boards(label, zone), post_media(url, kind, sort_order)')
       .or(`title.ilike.%${q}%,content.ilike.%${q}%`)
       .order('created_at', { ascending:false })
       .limit(20)
@@ -3066,7 +3437,7 @@ async function openDM(){
   box.innerHTML = '<div class="loading">불러오는 중...</div>';
 
   const { data, error } = await db.from('conversations')
-    .select('*, a:profiles!conversations_user_a_fkey(id, nickname, avatar_emoji, avatar_url, role, hide_read_receipt), b:profiles!conversations_user_b_fkey(id, nickname, avatar_emoji, avatar_url, role, hide_read_receipt)')
+    .select('*, a:profiles!conversations_user_a_fkey(id, nickname, avatar_emoji, avatar_url, role, supporter, hide_read_receipt), b:profiles!conversations_user_b_fkey(id, nickname, avatar_emoji, avatar_url, role, supporter, hide_read_receipt)')
     .or(`user_a.eq.${me.id},user_b.eq.${me.id}`)
     .order('last_message_at', { ascending:false });
 
