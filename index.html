@@ -1041,7 +1041,7 @@
     background:linear-gradient(180deg,#FCEDF1,#F9E1E9); border-radius:999px; flex-shrink:0;
   }
   .adm-tab{
-    flex:1; font-family:inherit; font-size:12px; color:var(--sub);
+    flex:1; font-family:inherit; font-size:11px; color:var(--sub);
     background:none; border:none; padding:8px 0; border-radius:999px; cursor:pointer;
   }
   .adm-tab.on{ background:#fff; color:var(--ribbon-deep); font-weight:700; box-shadow:0 2px 6px rgba(217,113,143,0.18); }
@@ -1106,6 +1106,66 @@
     background:linear-gradient(180deg,#F3D394,var(--gold));
     color:#fff; border-color:transparent;
   }
+
+  /* 게시판 관리 */
+  .bd-zone{
+    font-family:'Gowun Batang',serif; font-size:13px;
+    color:var(--ribbon-deep); letter-spacing:1.5px;
+    padding:16px 18px 8px;
+  }
+  .bd-zone.g{ color:var(--gold-deep); }
+  .bd-row{
+    display:flex; align-items:center; gap:9px;
+    padding:11px 18px; border-bottom:1px dashed var(--line);
+  }
+  .bd-name{ flex:1; font-size:13.5px; min-width:0; }
+  .bd-cnt{ font-size:10.5px; color:var(--sub); flex-shrink:0; }
+  .bd-mini{
+    width:30px; height:30px; border-radius:9px;
+    border:1px solid var(--line); background:#fff;
+    font-size:12px; cursor:pointer; flex-shrink:0;
+    color:var(--sub);
+  }
+  .bd-mini.danger{ border-color:#EFC8C8; color:#C96B6B; }
+  .bd-add{
+    margin:14px 18px 24px; padding:14px;
+    background:#FFFAFC; border:1px dashed var(--ribbon); border-radius:14px;
+  }
+  .bd-add-t{ font-size:12.5px; font-weight:700; margin-bottom:10px; }
+  .bd-add-row{ display:flex; gap:7px; }
+  .bd-add input{
+    flex:1; border:1.5px solid var(--line); background:#fff;
+    border-radius:11px; padding:11px 13px;
+    font-family:inherit; font-size:15px; outline:none; min-width:0;
+  }
+  .bd-add select{
+    border:1.5px solid var(--line); background:#fff;
+    border-radius:11px; padding:11px 8px;
+    font-family:inherit; font-size:13px; outline:none;
+  }
+  .bd-add button{
+    font-family:inherit; font-size:13px; font-weight:700; color:#fff;
+    border:none; padding:0 18px; border-radius:11px; cursor:pointer;
+    background:linear-gradient(180deg,var(--ribbon),var(--ribbon-deep));
+    flex-shrink:0;
+  }
+
+  /* 게시판 이동 시트 */
+  .mv-list{ display:flex; flex-direction:column; gap:7px; max-height:52vh; overflow-y:auto; }
+  .mv-item{
+    display:flex; align-items:center; gap:8px;
+    padding:13px 14px; background:#FFFAFC;
+    border:1.5px solid var(--line); border-radius:13px;
+    cursor:pointer; font-family:inherit; font-size:13px;
+    text-align:left; color:var(--text);
+  }
+  .mv-item.on{
+    border-color:var(--ribbon);
+    background:linear-gradient(180deg,#FCE6EC,#F9D7E1);
+    color:var(--ribbon-deep); font-weight:700;
+  }
+  .mv-item .z{ font-size:10px; color:var(--sub); margin-left:auto; }
+  .mv-item.cur{ opacity:.45; }
 
   /* ============ 내 정보 ============ */
   .me-wrap{ padding:30px 20px; text-align:center; }
@@ -1303,6 +1363,7 @@
     <div class="d-head">
       <button class="d-back" id="dBack">←</button>
       <div class="d-title" id="dBoard">글</div>
+      <button class="d-more" id="dMove" style="display:none">📂</button>
       <button class="d-more" id="dReport" style="display:none">🚨</button>
       <button class="d-more" id="dDelete" style="display:none">🗑</button>
     </div>
@@ -1471,7 +1532,8 @@
     <div class="adm-tabs">
       <button class="adm-tab on" data-adm="open">신고 대기</button>
       <button class="adm-tab" data-adm="closed">처리 완료</button>
-      <button class="adm-tab" data-adm="users">회원 관리</button>
+      <button class="adm-tab" data-adm="users">회원</button>
+      <button class="adm-tab" data-adm="boards">게시판</button>
     </div>
     <div class="scroll" id="admScroll">
       <div id="admBody"></div>
@@ -1497,6 +1559,17 @@
         <button class="sheet-cancel" id="rpCancel">취소</button>
         <button class="sheet-save" id="rpSend">신고 보내기</button>
       </div>
+    </div>
+  </div>
+
+  <!-- 게시판 이동 -->
+  <div class="sheet" id="moveSheet">
+    <div class="sheet-box">
+      <div class="fl-head">
+        <div class="sheet-t">게시판 이동</div>
+        <button class="fl-close" id="mvClose">✕</button>
+      </div>
+      <div class="mv-list" id="mvList"></div>
     </div>
   </div>
 
@@ -1962,7 +2035,7 @@ function postCard(p){
       <div class="avatar">${avatarInner(p.author)}</div>
       <div>
         <div class="p-name">${esc(p.author?.nickname || '알 수 없음')} ${hostBadge(p.author)}</div>
-        <div class="p-meta">${esc(p.boards?.label || '')} · ${timeAgo(p.created_at)}</div>
+        <div class="p-meta">${esc(p.boards?.label || '')} · ${timeAgo(p.created_at)}${p.view_count ? ' · 조회 ' + p.view_count : ''}</div>
       </div>
       ${mine ? '<button class="p-del">⋯</button>' : ''}
     </div>
@@ -2279,6 +2352,7 @@ async function openDetail(postId){
   $('dBoard').textContent = p.boards?.label || '글';
   $('dDelete').style.display = mine ? 'block' : 'none';
   $('dReport').style.display = (me && p.author_id !== me.id) ? 'block' : 'none';
+  $('dMove').style.display = mine ? 'block' : 'none';
 
   $('dBody').innerHTML = `
     <span class="d-tag${isInfo ? ' g' : ''}">${esc(p.boards?.label || '')}</span>
@@ -2287,7 +2361,7 @@ async function openDetail(postId){
       <div class="avatar">${avatarInner(p.author)}</div>
       <div>
         <div class="d-aname">${esc(p.author?.nickname || '알 수 없음')} ${hostBadge(p.author)}</div>
-        <div class="d-atime">${timeAgo(p.created_at)}</div>
+        <div class="d-atime">${timeAgo(p.created_at)} · 조회 ${p.view_count || 0}</div>
       </div>
     </div>
     <div class="d-content">${esc(p.content)}</div>
@@ -2314,9 +2388,49 @@ async function openDetail(postId){
 
   $('dScroll').scrollTop = 0;
   loadComments(p.id);
+
+  // 조회수 (본인 글은 안 셈, 세션당 한 번)
+  try{
+    const seen = JSON.parse(sessionStorage.getItem('rb_seen') || '[]');
+    if(!seen.includes(p.id) && p.author_id !== me.id){
+      await db.rpc('bump_view', { pid: p.id });
+      seen.push(p.id);
+      sessionStorage.setItem('rb_seen', JSON.stringify(seen.slice(-200)));
+    }
+  }catch{}
 }
 
 $('dBack').addEventListener('click', () => { screen('home'); loadFeed(); });
+
+$('dMove').addEventListener('click', openMove);
+$('mvClose').addEventListener('click', () => $('moveSheet').classList.remove('on'));
+$('moveSheet').addEventListener('click', e => {
+  if(e.target === $('moveSheet')) $('moveSheet').classList.remove('on');
+});
+
+function openMove(){
+  if(!curPost) return;
+  const box = $('mvList');
+  box.innerHTML = '';
+  boards.forEach(b => {
+    const btn = document.createElement('button');
+    const cur = b.id === curPost.board_id;
+    btn.className = 'mv-item' + (cur ? ' cur' : '');
+    btn.innerHTML = `<span>${b.zone === 'info' ? '📌 ' : '🎀 '}${esc(b.label)}</span>` +
+      `<span class="z">${b.zone === 'info' ? '정보함' : '내 방'}${cur ? ' · 현재' : ''}</span>`;
+    if(!cur) btn.addEventListener('click', () => moveTo(b));
+    box.appendChild(btn);
+  });
+  $('moveSheet').classList.add('on');
+}
+
+async function moveTo(b){
+  const { error } = await db.from('posts').update({ board_id: b.id }).eq('id', curPost.id);
+  if(error) return toast(ko(error.message), 'bad');
+  $('moveSheet').classList.remove('on');
+  toast(`"${b.label}"로 옮겼어요 🎀`, 'good');
+  openDetail(curPost.id);
+}
 
 $('dReport').addEventListener('click', () => {
   if(!curPost) return;
@@ -2757,6 +2871,7 @@ async function loadAdmin(){
   $('admScroll').scrollTop = 0;
 
   if(admTab === 'users') return loadAdminUsers();
+  if(admTab === 'boards') return loadAdminBoards();
 
   const { data, error } = await db.from('reports')
     .select('*, reporter:profiles!reports_reporter_id_fkey(nickname), target:profiles!reports_target_user_id_fkey(nickname), posts(id, title), comments(id, content)')
@@ -2892,6 +3007,126 @@ async function loadAdminUsers(q){
       toast(now ? '후원자 뱃지를 뗐어요' : '후원자 뱃지를 달았어요 🎀', now ? '' : 'good');
     });
   });
+}
+
+async function loadAdminBoards(){
+  const box = $('admBody');
+
+  const { data: bs } = await db.from('boards').select('*').order('zone').order('sort_order');
+  const { data: counts } = await db.from('posts').select('board_id');
+
+  const cnt = {};
+  (counts || []).forEach(p => { cnt[p.board_id] = (cnt[p.board_id] || 0) + 1; });
+
+  boards = bs || boards;
+
+  let html = '';
+  ['room','info'].forEach(z => {
+    const list = (bs || []).filter(b => b.zone === z);
+    html += `<div class="bd-zone${z === 'info' ? ' g' : ''}">${z === 'info' ? '📌 정보함' : '🎀 내 방'}</div>`;
+    if(!list.length) html += '<div class="bd-row"><span class="bd-name" style="color:#C9B">게시판이 없어요</span></div>';
+    list.forEach((b, i) => {
+      html += `
+        <div class="bd-row" data-id="${esc(b.id)}">
+          <span class="bd-name">${esc(b.label)}</span>
+          <span class="bd-cnt">글 ${cnt[b.id] || 0}</span>
+          <button class="bd-mini" data-up="${esc(b.id)}" ${i === 0 ? 'disabled style="opacity:.3"' : ''}>↑</button>
+          <button class="bd-mini" data-down="${esc(b.id)}" ${i === list.length - 1 ? 'disabled style="opacity:.3"' : ''}>↓</button>
+          <button class="bd-mini" data-rename="${esc(b.id)}">✎</button>
+          <button class="bd-mini danger" data-del="${esc(b.id)}">🗑</button>
+        </div>`;
+    });
+  });
+
+  html += `
+    <div class="bd-add">
+      <div class="bd-add-t">새 게시판 추가</div>
+      <div class="bd-add-row">
+        <select id="bdZone">
+          <option value="room">내 방</option>
+          <option value="info">정보함</option>
+        </select>
+        <input id="bdLabel" placeholder="게시판 이름" maxlength="12">
+        <button id="bdAdd">추가</button>
+      </div>
+    </div>`;
+
+  box.innerHTML = html;
+
+  // 추가
+  $('bdAdd').addEventListener('click', async () => {
+    const label = $('bdLabel').value.trim();
+    const zone = $('bdZone').value;
+    if(!label) return toast('게시판 이름을 입력해주세요', 'bad');
+
+    const id = 'b' + Date.now().toString(36);
+    const max = Math.max(0, ...(bs || []).filter(b => b.zone === zone).map(b => b.sort_order || 0));
+
+    const { error } = await db.from('boards')
+      .insert({ id, zone, label, sort_order: max + 1 });
+    if(error) return toast(ko(error.message), 'bad');
+
+    toast(`"${label}" 게시판을 만들었어요 🎀`, 'good');
+    await reloadBoards();
+    loadAdminBoards();
+  });
+
+  // 이름 변경
+  box.querySelectorAll('[data-rename]').forEach(b => {
+    b.addEventListener('click', async () => {
+      const cur = (bs || []).find(x => x.id === b.dataset.rename);
+      const nv = prompt('새 이름을 입력해주세요', cur?.label || '');
+      if(!nv || !nv.trim()) return;
+      const { error } = await db.from('boards').update({ label: nv.trim() }).eq('id', b.dataset.rename);
+      if(error) return toast(ko(error.message), 'bad');
+      toast('이름을 바꿨어요');
+      await reloadBoards();
+      loadAdminBoards();
+    });
+  });
+
+  // 순서
+  async function swap(id, dir){
+    const b = (bs || []).find(x => x.id === id);
+    const same = (bs || []).filter(x => x.zone === b.zone);
+    const i = same.findIndex(x => x.id === id);
+    const j = i + dir;
+    if(j < 0 || j >= same.length) return;
+    const other = same[j];
+    await db.from('boards').update({ sort_order: other.sort_order }).eq('id', b.id);
+    await db.from('boards').update({ sort_order: b.sort_order }).eq('id', other.id);
+    await reloadBoards();
+    loadAdminBoards();
+  }
+  box.querySelectorAll('[data-up]').forEach(b =>
+    b.addEventListener('click', () => swap(b.dataset.up, -1)));
+  box.querySelectorAll('[data-down]').forEach(b =>
+    b.addEventListener('click', () => swap(b.dataset.down, 1)));
+
+  // 삭제
+  box.querySelectorAll('[data-del]').forEach(b => {
+    b.addEventListener('click', async () => {
+      const id = b.dataset.del;
+      const n = cnt[id] || 0;
+      const name = (bs || []).find(x => x.id === id)?.label || '';
+      const msg = n
+        ? `"${name}" 게시판을 지우면 안에 있는 글 ${n}개도 함께 사라져요.\n\n정말 지울까요?`
+        : `"${name}" 게시판을 지울까요?`;
+      if(!confirm(msg)) return;
+      const { error } = await db.from('boards').delete().eq('id', id);
+      if(error) return toast(ko(error.message), 'bad');
+      toast('게시판을 지웠어요');
+      await reloadBoards();
+      loadAdminBoards();
+    });
+  });
+}
+
+async function reloadBoards(){
+  const { data } = await db.from('boards').select('*').order('sort_order');
+  boards = data || [];
+  buildBoardChips();
+  buildWriteChips();
 }
 
 /* ---------- 팔로워 / 팔로잉 목록 ---------- */
