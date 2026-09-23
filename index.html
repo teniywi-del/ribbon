@@ -96,6 +96,10 @@
 
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
 
+  input, textarea, select, button{ color:inherit; }
+  input, textarea, select{ color:var(--text); }
+  input::placeholder, textarea::placeholder{ color:var(--ph); }
+
   body{
     font-family:'Noto Sans KR',sans-serif;
     background:var(--card);
@@ -407,13 +411,13 @@
   .title-input{
     width:100%; border:none; border-bottom:1px dashed var(--line);
     padding:10px 2px 12px; font-family:inherit; font-size:16px; font-weight:700;
-    outline:none; background:transparent;
+    outline:none; background:transparent; color:var(--text);
   }
   .title-input::placeholder{ color:var(--ph); font-weight:500; }
   .content-input{
     width:100%; min-height:200px; border:none; padding:14px 2px;
     font-family:inherit; font-size:15px; line-height:1.7;
-    outline:none; resize:none; background:transparent;
+    outline:none; resize:none; background:transparent; color:var(--text);
   }
   .content-input::placeholder{ color:var(--ph); }
   .w-len{ font-size:11.5px; color:var(--sub); text-align:right; }
