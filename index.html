@@ -55,6 +55,16 @@
   }
 
   @media (prefers-color-scheme: dark){
+    input, textarea, select,
+    .input, .title-input, .content-input, .c-field, .sfield input{
+      color:#F2E7EB !important;
+      -webkit-text-fill-color:#F2E7EB !important;
+      caret-color:#EC93AE;
+    }
+    input::placeholder, textarea::placeholder{
+      color:#6B565E !important;
+      -webkit-text-fill-color:#6B565E !important;
+    }
     :root{
       --bg:#1B1418;
       --card:#231A1E;
@@ -96,9 +106,15 @@
 
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
 
-  input, textarea, select, button{ color:inherit; }
-  input, textarea, select{ color:var(--text); }
-  input::placeholder, textarea::placeholder{ color:var(--ph); }
+  input, textarea, select{
+    color:var(--text);
+    -webkit-text-fill-color:var(--text);
+    caret-color:var(--ribbon-deep);
+  }
+  input::placeholder, textarea::placeholder{
+    color:var(--ph);
+    -webkit-text-fill-color:var(--ph);
+  }
 
   body{
     font-family:'Noto Sans KR',sans-serif;
