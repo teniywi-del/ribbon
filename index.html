@@ -1167,6 +1167,62 @@
   .mv-item .z{ font-size:10px; color:var(--sub); margin-left:auto; }
   .mv-item.cur{ opacity:.45; }
 
+  /* 정지 배너 */
+  .ban-banner{
+    margin:0 18px 12px; padding:14px 15px;
+    background:linear-gradient(145deg,#FBEAEA,#F7DEDE);
+    border:1px solid #EFC8C8; border-radius:16px;
+  }
+  .ban-t{ font-size:13px; font-weight:700; color:#C05858; margin-bottom:5px; }
+  .ban-d{ font-size:11.5px; color:#A96A6A; line-height:1.7; }
+
+  /* 신고 상태 칩 */
+  .st-chip{
+    display:inline-flex; align-items:center;
+    font-size:9.5px; font-weight:700; color:#fff;
+    padding:3px 9px; border-radius:999px; flex-shrink:0;
+  }
+  .st-open{ background:linear-gradient(180deg,#E89898,#D97878); }
+  .st-reviewing{ background:linear-gradient(180deg,#F3D394,var(--gold)); }
+  .st-done{ background:linear-gradient(180deg,#A8D5B5,#7FB894); }
+  .st-ignored{ background:linear-gradient(180deg,#C9C0C3,#A99DA1); }
+
+  .my-rp{
+    margin:0 18px 10px; padding:13px 14px;
+    background:#fff; border:1px solid var(--line); border-radius:15px;
+  }
+  .my-rp-top{ display:flex; align-items:center; gap:7px; margin-bottom:7px; }
+  .my-rp-when{ font-size:10.5px; color:var(--sub); margin-left:auto; }
+  .my-rp-reason{ font-size:13px; font-weight:700; }
+  .my-rp-note{
+    font-size:11.5px; color:var(--sub); line-height:1.6;
+    background:#FFFAFC; border-left:2px solid var(--line);
+    padding:8px 10px; border-radius:0 8px 8px 0; margin-top:8px;
+  }
+
+  /* 정지 시트 */
+  .ban-opts{ display:flex; flex-wrap:wrap; gap:7px; }
+  .ban-opt{
+    flex:1 1 calc(50% - 4px);
+    font-family:inherit; font-size:13px;
+    padding:13px 0; border-radius:12px; cursor:pointer;
+    border:1.5px solid var(--line); background:#FFFAFC; color:var(--text);
+  }
+  .ban-opt.on{
+    border-color:#E89898;
+    background:linear-gradient(180deg,#FBEAEA,#F7DEDE);
+    color:#C05858; font-weight:700;
+  }
+  .sheet-save.danger{
+    background:linear-gradient(180deg,#E89898,#D97878);
+    box-shadow:0 5px 13px rgba(217,120,120,.3);
+  }
+  .adm-btn.ban{ border-color:#EFC8C8; color:#C96B6B; }
+  .adm-btn.ban.on{
+    background:linear-gradient(180deg,#E89898,#D97878);
+    color:#fff; border-color:transparent;
+  }
+
   /* ============ 내 정보 ============ */
   .me-wrap{ padding:30px 20px; text-align:center; }
   .me-av{
@@ -1295,6 +1351,7 @@
     <div class="subbar" id="subbar"></div>
 
     <div class="scroll">
+      <div id="banBanner"></div>
       <div class="feed" id="feed">
         <div class="loading">불러오는 중...</div>
       </div>
@@ -1558,6 +1615,59 @@
       <div class="sheet-actions">
         <button class="sheet-cancel" id="rpCancel">취소</button>
         <button class="sheet-save" id="rpSend">신고 보내기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 내 신고 내역 -->
+  <div class="sheet" id="myRpSheet">
+    <div class="sheet-box">
+      <div class="fl-head">
+        <div class="sheet-t">내가 신고한 내역</div>
+        <button class="fl-close" id="myRpClose">✕</button>
+      </div>
+      <div class="fl-list" id="myRpList"></div>
+    </div>
+  </div>
+
+  <!-- 회원 정지 -->
+  <div class="sheet" id="banSheet">
+    <div class="sheet-box">
+      <div class="fl-head">
+        <div class="sheet-t" id="banTitle">회원 정지</div>
+        <button class="fl-close" id="banClose">✕</button>
+      </div>
+      <div class="field">
+        <label class="label">정지 기간</label>
+        <div class="ban-opts" id="banOpts"></div>
+      </div>
+      <div class="field">
+        <label class="label">사유 (본인에게 보여요)</label>
+        <textarea class="input" id="banReason" maxlength="200" placeholder="어떤 이유로 정지하는지 적어주세요"></textarea>
+      </div>
+      <div class="sheet-actions">
+        <button class="sheet-cancel" id="banCancel">취소</button>
+        <button class="sheet-save danger" id="banSave">정지하기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 신고 처리 -->
+  <div class="sheet" id="noteSheet">
+    <div class="sheet-box">
+      <div class="fl-head">
+        <div class="sheet-t" id="noteTitle">처리 결과</div>
+        <button class="fl-close" id="noteClose">✕</button>
+      </div>
+      <p style="font-size:12px;color:var(--sub);line-height:1.7;margin-bottom:14px">
+        신고한 사람에게 이 내용이 전달돼요.
+      </p>
+      <div class="field">
+        <textarea class="input" id="noteText" maxlength="200" placeholder="예) 확인 후 글을 삭제했어요"></textarea>
+      </div>
+      <div class="sheet-actions">
+        <button class="sheet-cancel" id="noteCancel">취소</button>
+        <button class="sheet-save" id="noteSave">보내기</button>
       </div>
     </div>
   </div>
@@ -1862,6 +1972,7 @@ async function enter(){
 
   await loadLiked();
   await loadFollowing();
+  showBanBanner();
   screen('home');
   loadFeed();
   refreshBadge();
@@ -2142,6 +2253,9 @@ $('origRow').addEventListener('click', () => {
 });
 
 function openWrite(){
+  if(isBanned(me)){
+    return toast(banText(me) + ' — 글을 쓸 수 없어요', 'bad');
+  }
   writeBoard = null;
   $('wTitle').value = ''; $('wContent').value = ''; $('wLen').textContent = '0';
   $('wBoards').querySelectorAll('.chip').forEach(x => x.classList.remove('on'));
@@ -2574,6 +2688,7 @@ $('cField').addEventListener('keydown', e => { if(e.key === 'Enter') sendComment
 async function sendComment(){
   const text = $('cField').value.trim();
   if(!text || !curPost || !me) return;
+  if(isBanned(me)) return toast(banText(me) + ' — 댓글을 쓸 수 없어요', 'bad');
 
   const btn = $('cSend');
   btn.disabled = true;
@@ -2654,8 +2769,10 @@ async function openProfile(userId){
   const btns = $('pfBtns');
   if(mine){
     btns.innerHTML = '<button class="pf-btn fill" id="pfEdit">프로필 수정</button>'
+      + '<button class="pf-btn" id="pfMyRp">내 신고</button>'
       + (isStaff(me) ? '<button class="pf-btn" id="pfAdmin">관리자</button>' : '');
     $('pfEdit').addEventListener('click', openEdit);
+    $('pfMyRp').addEventListener('click', openMyReports);
     if(isStaff(me)) $('pfAdmin').addEventListener('click', openAdmin);
   } else {
     const isFol = followingSet.has(u.id);
@@ -2841,9 +2958,168 @@ $('rpSend').addEventListener('click', async () => {
   btn.disabled = false; btn.textContent = '신고 보내기';
   if(error) return toast(ko(error.message), 'bad');
 
+  // 관리자들에게 알림
+  const { data: admins } = await db.from('profiles')
+    .select('id').in('role', ['owner','admin']);
+  if(admins && admins.length){
+    await db.from('notifications').insert(
+      admins.filter(a => a.id !== me.id).map(a => ({
+        user_id: a.id,
+        actor_id: me.id,
+        kind: 'notice',
+        post_id: rpTarget.postId ?? null,
+        preview: '🚨 새 신고 — ' + rpReason
+      }))
+    );
+  }
+
   $('reportSheet').classList.remove('on');
   toast('신고를 접수했어요. 확인 후 조치할게요 🎀', 'good');
 });
+
+function showBanBanner(){
+  const box = $('banBanner');
+  if(!box) return;
+  if(!isBanned(me)){ box.innerHTML = ''; return; }
+  box.innerHTML = `
+    <div class="ban-banner">
+      <div class="ban-t">🔒 ${banText(me)}</div>
+      <div class="ban-d">
+        ${esc(me.ban_reason || '규정 위반으로 이용이 제한되었어요.')}<br>
+        정지 기간에는 글·댓글·쪽지를 쓸 수 없어요. 읽기는 가능해요.
+      </div>
+    </div>`;
+}
+
+/* ================= 내 신고 내역 ================= */
+const ST_LABEL = {
+  open:      { t:'접수됨',   c:'st-open' },
+  reviewing: { t:'확인 중',  c:'st-reviewing' },
+  done:      { t:'조치 완료', c:'st-done' },
+  ignored:   { t:'조치 없음', c:'st-ignored' }
+};
+
+$('myRpClose').addEventListener('click', () => $('myRpSheet').classList.remove('on'));
+$('myRpSheet').addEventListener('click', e => {
+  if(e.target === $('myRpSheet')) $('myRpSheet').classList.remove('on');
+});
+
+async function openMyReports(){
+  const box = $('myRpList');
+  box.innerHTML = '<div class="loading">불러오는 중...</div>';
+  $('myRpSheet').classList.add('on');
+
+  const { data, error } = await db.from('reports')
+    .select('*')
+    .eq('reporter_id', me.id)
+    .order('created_at', { ascending:false })
+    .limit(50);
+
+  if(error){ box.innerHTML = '<div class="c-empty">' + esc(ko(error.message)) + '</div>'; return; }
+
+  if(!data || !data.length){
+    box.innerHTML = '<div class="c-empty" style="background:none">신고한 내역이 없어요 🎀</div>';
+    return;
+  }
+
+  box.innerHTML = data.map(r => {
+    const st = ST_LABEL[r.status] || ST_LABEL.open;
+    const kind = r.target_type === 'post' ? '글' : r.target_type === 'comment' ? '댓글' : '회원';
+    return `
+      <div class="my-rp">
+        <div class="my-rp-top">
+          <span class="st-chip ${st.c}">${st.t}</span>
+          <span style="font-size:11px;color:var(--sub)">${kind} 신고</span>
+          <span class="my-rp-when">${timeAgo(r.created_at)}</span>
+        </div>
+        <div class="my-rp-reason">${esc(r.reason)}</div>
+        ${r.admin_note ? `<div class="my-rp-note"><b>관리자</b><br>${esc(r.admin_note)}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+/* ================= 회원 정지 ================= */
+const BAN_OPTS = [
+  { label:'3일',  days:3 },
+  { label:'7일',  days:7 },
+  { label:'30일', days:30 },
+  { label:'영구', days:null }
+];
+let banTarget = null, banDays = undefined;
+
+function openBan(user){
+  banTarget = user;
+  banDays = undefined;
+  $('banTitle').textContent = user.nickname + '님 정지';
+  $('banReason').value = '';
+
+  const box = $('banOpts');
+  box.innerHTML = '';
+  BAN_OPTS.forEach(o => {
+    const b = document.createElement('button');
+    b.className = 'ban-opt';
+    b.textContent = o.label;
+    b.addEventListener('click', () => {
+      box.querySelectorAll('.ban-opt').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      banDays = o.days;
+    });
+    box.appendChild(b);
+  });
+
+  $('banSheet').classList.add('on');
+}
+
+$('banClose').addEventListener('click', () => $('banSheet').classList.remove('on'));
+$('banCancel').addEventListener('click', () => $('banSheet').classList.remove('on'));
+$('banSheet').addEventListener('click', e => {
+  if(e.target === $('banSheet')) $('banSheet').classList.remove('on');
+});
+
+$('banSave').addEventListener('click', async () => {
+  if(banDays === undefined) return toast('정지 기간을 골라주세요', 'bad');
+  const reason = $('banReason').value.trim();
+  if(!reason) return toast('사유를 적어주세요', 'bad');
+
+  const until = banDays === null
+    ? new Date('2099-12-31').toISOString()
+    : new Date(Date.now() + banDays * 86400000).toISOString();
+
+  const btn = $('banSave');
+  btn.disabled = true; btn.textContent = '처리 중...';
+
+  const { error } = await db.from('profiles')
+    .update({ banned_until: until, ban_reason: reason })
+    .eq('id', banTarget.id);
+
+  btn.disabled = false; btn.textContent = '정지하기';
+  if(error) return toast(ko(error.message), 'bad');
+
+  $('banSheet').classList.remove('on');
+  toast(banTarget.nickname + '님을 정지했어요');
+  if(admTab === 'users') loadAdminUsers();
+});
+
+async function unban(user){
+  if(!confirm(user.nickname + '님의 정지를 풀까요?')) return;
+  const { error } = await db.from('profiles')
+    .update({ banned_until: null, ban_reason: null })
+    .eq('id', user.id);
+  if(error) return toast(ko(error.message), 'bad');
+  toast('정지를 풀었어요');
+  loadAdminUsers();
+}
+
+function isBanned(u){
+  return u && u.banned_until && new Date(u.banned_until) > new Date();
+}
+
+function banText(u){
+  if(!isBanned(u)) return '';
+  const d = new Date(u.banned_until);
+  if(d.getFullYear() >= 2099) return '영구 정지';
+  return d.toLocaleDateString('ko-KR', { month:'long', day:'numeric' }) + '까지 정지';
+}
 
 /* ================= 관리자 ================= */
 let admTab = 'open';
@@ -2914,11 +3190,15 @@ async function loadAdmin(){
       ${targetHtml}
       <div class="rp-detail" style="margin:0 0 10px">신고자: ${esc(r.reporter?.nickname || '-')}</div>
       ${admTab === 'open' ? `
-        <div class="rp-acts">
+        <div class="rp-acts" style="margin-bottom:7px">
           <button class="go">보러가기</button>
           ${r.post_id ? '<button class="del">글 삭제</button>' : ''}
           ${r.comment_id ? '<button class="del">댓글 삭제</button>' : ''}
-          <button class="ok">처리 완료</button>
+        </div>
+        <div class="rp-acts">
+          ${r.target_user_id ? '<button class="banb">회원 정지</button>' : ''}
+          <button class="ok">조치 완료</button>
+          <button class="ign">조치 없음</button>
         </div>` : ''}`;
 
     const tgt = el.querySelector('.rp-target');
@@ -2946,10 +3226,18 @@ async function loadAdmin(){
     });
 
     const okBtn = el.querySelector('.ok');
-    if(okBtn) okBtn.addEventListener('click', async () => {
-      await db.from('reports').update({ status:'done' }).eq('id', r.id);
-      toast('처리 완료로 옮겼어요');
-      loadAdmin();
+    if(okBtn) okBtn.addEventListener('click', () => askNote(r, 'done'));
+
+    const ignBtn = el.querySelector('.ign');
+    if(ignBtn) ignBtn.addEventListener('click', () => askNote(r, 'ignored'));
+
+    const banB = el.querySelector('.banb');
+    if(banB) banB.addEventListener('click', async () => {
+      const { data: u } = await db.from('profiles')
+        .select('id, nickname, role').eq('id', r.target_user_id).single();
+      if(!u) return toast('회원을 찾을 수 없어요', 'bad');
+      if(u.role === 'owner') return toast('관리자는 정지할 수 없어요', 'bad');
+      openBan(u);
     });
 
     box.appendChild(el);
@@ -2960,7 +3248,7 @@ async function loadAdminUsers(q){
   const box = $('admBody');
 
   let query = db.from('profiles')
-    .select('id, nickname, handle, avatar_emoji, avatar_url, role, supporter, created_at')
+    .select('id, nickname, handle, avatar_emoji, avatar_url, role, supporter, created_at, banned_until, ban_reason')
     .order('created_at', { ascending:false })
     .limit(50);
 
@@ -2980,10 +3268,12 @@ async function loadAdminUsers(q){
       <div class="adm-urow">
         <div class="avatar">${avatarInner(u)}</div>
         <div class="adm-umain">
-          <div class="fl-name">${esc(u.nickname)} ${hostBadge(u)} ${u.supporter ? '<span class="sup">🎀 후원자</span>' : ''}</div>
-          <div class="fl-bio">@${esc(u.handle)}</div>
+          <div class="fl-name">${esc(u.nickname)} ${hostBadge(u)}</div>
+          <div class="fl-bio">@${esc(u.handle)}${isBanned(u) ? ' · <b style="color:#C96B6B">' + banText(u) + '</b>' : ''}</div>
         </div>
-        <button class="adm-btn${u.supporter ? ' on' : ''}" data-sup="${u.id}" data-now="${u.supporter ? 1 : 0}">후원자</button>
+        <button class="adm-btn${u.supporter ? ' on' : ''}" data-sup="${u.id}" data-now="${u.supporter ? 1 : 0}">후원</button>
+        ${u.role === 'owner' ? '' :
+          `<button class="adm-btn ban${isBanned(u) ? ' on' : ''}" data-ban="${u.id}">${isBanned(u) ? '해제' : '정지'}</button>`}
       </div>`).join('');
     box.innerHTML = html;
   }
@@ -2993,6 +3283,14 @@ async function loadAdminUsers(q){
   input.addEventListener('input', () => {
     clearTimeout(t);
     t = setTimeout(() => loadAdminUsers(input.value.trim()), 350);
+  });
+
+  box.querySelectorAll('[data-ban]').forEach(b => {
+    b.addEventListener('click', () => {
+      const u = (data || []).find(x => x.id === b.dataset.ban);
+      if(!u) return;
+      if(isBanned(u)) unban(u); else openBan(u);
+    });
   });
 
   box.querySelectorAll('[data-sup]').forEach(b => {
@@ -3008,6 +3306,53 @@ async function loadAdminUsers(q){
     });
   });
 }
+
+let noteTarget = null, noteStatus = null;
+
+function askNote(report, status){
+  noteTarget = report; noteStatus = status;
+  $('noteTitle').textContent = status === 'done' ? '조치 완료' : '조치 없음';
+  $('noteText').value = status === 'done'
+    ? '확인 후 조치했어요.'
+    : '확인했으나 규정 위반으로 보기 어려웠어요.';
+  $('noteSheet').classList.add('on');
+}
+
+$('noteClose').addEventListener('click', () => $('noteSheet').classList.remove('on'));
+$('noteCancel').addEventListener('click', () => $('noteSheet').classList.remove('on'));
+$('noteSheet').addEventListener('click', e => {
+  if(e.target === $('noteSheet')) $('noteSheet').classList.remove('on');
+});
+
+$('noteSave').addEventListener('click', async () => {
+  if(!noteTarget) return;
+  const note = $('noteText').value.trim();
+
+  const btn = $('noteSave');
+  btn.disabled = true; btn.textContent = '보내는 중...';
+
+  const { error } = await db.from('reports').update({
+    status: noteStatus,
+    admin_note: note || null,
+    handled_at: new Date().toISOString()
+  }).eq('id', noteTarget.id);
+
+  btn.disabled = false; btn.textContent = '보내기';
+  if(error) return toast(ko(error.message), 'bad');
+
+  // 신고자에게 알림
+  await db.from('notifications').insert({
+    user_id: noteTarget.reporter_id,
+    actor_id: me.id,
+    kind: 'notice',
+    preview: (noteStatus === 'done' ? '신고가 처리됐어요' : '신고를 확인했어요') +
+             (note ? ' — ' + note : '')
+  });
+
+  $('noteSheet').classList.remove('on');
+  toast('처리하고 신고자에게 알렸어요 🎀', 'good');
+  loadAdmin();
+});
 
 async function loadAdminBoards(){
   const box = $('admBody');
@@ -3932,6 +4277,7 @@ $('mField').addEventListener('keydown', e => { if(e.key === 'Enter') sendMessage
 async function sendMessage(){
   const text = $('mField').value.trim();
   if(!text || !curConv) return;
+  if(isBanned(me)) return toast(banText(me) + ' — 쪽지를 보낼 수 없어요', 'bad');
 
   const btn = $('mSend');
   btn.disabled = true;
