@@ -652,6 +652,47 @@
   .c-empty{ text-align:center; padding:34px 0; color:var(--sub); font-size:12.5px; line-height:1.8; }
 
   /* 댓글 입력 */
+  /* 댓글 사진 */
+  .c-pick{
+    display:none; gap:7px; padding:8px 14px 0;
+    flex-shrink:0; overflow-x:auto; scrollbar-width:none;
+  }
+  .c-pick.on{ display:flex; }
+  .c-pick::-webkit-scrollbar{ display:none; }
+  .c-thumb{
+    width:56px; height:56px; border-radius:11px;
+    position:relative; flex-shrink:0; overflow:visible;
+    background:linear-gradient(145deg,var(--img1),var(--img2));
+  }
+  .c-thumb img{ width:100%; height:100%; object-fit:cover; border-radius:11px; display:block; }
+  .c-thumb .del{
+    position:absolute; top:-5px; right:-5px;
+    width:18px; height:18px; border-radius:50%;
+    background:var(--ribbon-deep); color:#fff; font-size:10px;
+    display:flex; align-items:center; justify-content:center;
+    border:2px solid var(--card); cursor:pointer; line-height:1;
+  }
+  .c-photo{
+    width:38px; height:38px; border-radius:50%;
+    border:1.5px solid var(--line); background:var(--card);
+    font-size:15px; cursor:pointer; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .c-photo:disabled{ opacity:.4; }
+
+  .c-media{
+    display:grid; gap:4px; margin-top:8px;
+    max-width:260px;
+  }
+  .c-media.n1{ grid-template-columns:1fr; }
+  .c-media.n2, .c-media.n3, .c-media.n4{ grid-template-columns:1fr 1fr; }
+  .c-media .cm{
+    border-radius:10px; overflow:hidden; aspect-ratio:1/1;
+    background:linear-gradient(145deg,var(--img1),var(--img2)); cursor:pointer;
+  }
+  .c-media.n1 .cm{ aspect-ratio:4/3; }
+  .c-media .cm img{ width:100%; height:100%; object-fit:cover; display:block; }
+
   .c-input{
     display:flex; align-items:center; gap:8px;
     padding:11px 14px; border-top:1px solid var(--line);
@@ -1658,10 +1699,13 @@
       <span id="cReplyTo"></span>
       <button id="cReplyCancel">취소</button>
     </div>
+    <div class="c-pick" id="cPick"></div>
     <div class="c-input">
+      <button class="c-photo" id="cPhoto">🖼️</button>
       <input class="c-field" id="cField" placeholder="따뜻한 댓글을 남겨주세요 🎀" maxlength="500">
       <button class="c-send" id="cSend">➤</button>
     </div>
+    <input type="file" id="cFile" accept="image/*" multiple hidden>
   </div>
 
   <!-- ==================== 탐색 ==================== -->
@@ -2881,6 +2925,7 @@ async function openDetail(postId){
   $('comments').innerHTML = '';
   $('cCount').textContent = '0';
   cancelReply();
+  clearCPick();
 
   const { data: p, error } = await db.from('posts')
     .select('*, author:profiles!posts_author_id_fkey(id, nickname, handle, avatar_emoji, avatar_url, role, supporter), boards(label, zone), post_media(url, kind, sort_order)')
@@ -3047,7 +3092,7 @@ async function loadComments(postId){
   box.innerHTML = '<div class="loading">불러오는 중...</div>';
 
   const { data, error } = await db.from('comments')
-    .select('*, author:profiles!comments_author_id_fkey(id, nickname, avatar_emoji, avatar_url, role, supporter)')
+    .select('*, author:profiles!comments_author_id_fkey(id, nickname, avatar_emoji, avatar_url, role, supporter), comment_media(url, sort_order)')
     .eq('post_id', postId)
     .order('created_at', { ascending:true });
 
@@ -3078,6 +3123,14 @@ async function loadComments(postId){
   });
 }
 
+function commentMediaHtml(list){
+  if(!list || !list.length) return '';
+  const items = [...list].sort((a,b) => a.sort_order - b.sort_order);
+  return `<div class="c-media n${items.length}">` +
+    items.map((m, i) => `<div class="cm" data-cm="${esc(m.url)}"><img src="${esc(m.url)}" loading="lazy" alt=""></div>`).join('') +
+    '</div>';
+}
+
 function commentNode(c, isReply){
   const el = document.createElement('div');
   el.className = isReply ? 'reply' : 'comment';
@@ -3094,6 +3147,7 @@ function commentNode(c, isReply){
         <span class="c-time">${timeAgo(c.created_at)}</span>
       </div>
       <p class="c-text">${esc(c.content)}</p>
+      ${commentMediaHtml(c.comment_media)}
       <div class="c-acts">
         ${isReply ? '' : '<button class="c-act reply">답글</button>'}
         ${mine ? '<button class="c-act del">삭제</button>' : ''}
@@ -3103,6 +3157,15 @@ function commentNode(c, isReply){
 
   el.querySelector('.avatar').addEventListener('click', () => openProfile(c.author_id));
   el.querySelector('.c-name').addEventListener('click', () => openProfile(c.author_id));
+
+  el.querySelectorAll('.cm').forEach((cm, i) => {
+    cm.addEventListener('click', ev => {
+      ev.stopPropagation();
+      const list = [...(c.comment_media || [])].sort((a,b) => a.sort_order - b.sort_order);
+      curMedia = list.map(m => ({ url: m.url, kind: 'image' }));
+      openLightbox(i);
+    });
+  });
 
   const rb = el.querySelector('.reply');
   if(rb) rb.addEventListener('click', () => startReply(c));
@@ -3139,28 +3202,98 @@ $('cReplyCancel').addEventListener('click', cancelReply);
 $('cSend').addEventListener('click', sendComment);
 $('cField').addEventListener('keydown', e => { if(e.key === 'Enter') sendComment(); });
 
+const MAX_CIMG = 4;
+let cPicked = [];
+
+function renderCPick(){
+  const box = $('cPick');
+  box.innerHTML = '';
+  cPicked.forEach((p, i) => {
+    const d = document.createElement('div');
+    d.className = 'c-thumb';
+    d.innerHTML = `<img src="${p.url}" alt=""><span class="del">×</span>`;
+    d.querySelector('.del').addEventListener('click', () => {
+      URL.revokeObjectURL(p.url);
+      cPicked.splice(i, 1);
+      renderCPick();
+    });
+    box.appendChild(d);
+  });
+  box.classList.toggle('on', cPicked.length > 0);
+  $('cPhoto').disabled = cPicked.length >= MAX_CIMG;
+}
+
+function clearCPick(){
+  cPicked.forEach(p => URL.revokeObjectURL(p.url));
+  cPicked = [];
+  renderCPick();
+}
+
+$('cPhoto').addEventListener('click', () => $('cFile').click());
+
+$('cFile').addEventListener('change', e => {
+  const files = [...e.target.files];
+  for(const f of files){
+    if(cPicked.length >= MAX_CIMG){ toast('사진은 4장까지만 올릴 수 있어요', 'bad'); break; }
+    if(f.size > 20 * 1024 * 1024){ toast('사진은 20MB 이하만 가능해요', 'bad'); continue; }
+    cPicked.push({ file: f, url: URL.createObjectURL(f) });
+  }
+  e.target.value = '';
+  renderCPick();
+});
+
+async function uploadCommentMedia(commentId){
+  for(let i = 0; i < cPicked.length; i++){
+    const file = await compressImage(cPicked[i].file);
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `${me.id}/c${commentId}_${Date.now()}_${i}.${ext}`;
+
+    const { error: upErr } = await db.storage.from('posts')
+      .upload(path, file, { cacheControl:'3600', upsert:false });
+    if(upErr) throw upErr;
+
+    const { data: pub } = db.storage.from('posts').getPublicUrl(path);
+    const { error: rowErr } = await db.from('comment_media').insert({
+      comment_id: commentId, url: pub.publicUrl, sort_order: i
+    });
+    if(rowErr) throw rowErr;
+  }
+}
+
 async function sendComment(){
   const text = $('cField').value.trim();
-  if(!text || !curPost || !me) return;
+  if((!text && !cPicked.length) || !curPost || !me) return;
   if(isBanned(me)) return toast(banText(me) + ' — 댓글을 쓸 수 없어요', 'bad');
 
   const btn = $('cSend');
   btn.disabled = true;
 
-  const { error } = await db.from('comments').insert({
+  const { data: made, error } = await db.from('comments').insert({
     post_id: curPost.id,
     author_id: me.id,
     parent_id: replyTo ? replyTo.id : null,
-    content: text
-  });
+    content: text || '사진'
+  }).select('id').single();
+
+  if(error){ btn.disabled = false; return toast(ko(error.message), 'bad'); }
+
+  if(cPicked.length){
+    try{
+      await uploadCommentMedia(made.id);
+    }catch(e){
+      btn.disabled = false;
+      return toast('사진 업로드에 실패했어요: ' + ko(e.message), 'bad');
+    }
+  }
 
   btn.disabled = false;
-  if(error) return toast(ko(error.message), 'bad');
 
-  if(replyTo) notify(replyTo.author_id, 'reply', { postId: curPost.id, preview: text });
-  else notify(curPost.author_id, 'comment', { postId: curPost.id, preview: text });
+  const preview = text || '사진을 남겼어요';
+  if(replyTo) notify(replyTo.author_id, 'reply', { postId: curPost.id, preview });
+  else notify(curPost.author_id, 'comment', { postId: curPost.id, preview });
 
   $('cField').value = '';
+  clearCPick();
   cancelReply();
   await refreshCommentCount();
   await loadComments(curPost.id);
