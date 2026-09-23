@@ -397,6 +397,37 @@
   .add-btn .plus{ font-size:18px; color:var(--ribbon); line-height:1; }
   .add-btn .num{ font-size:9.5px; color:var(--sub); }
   .hint{ font-size:11px; color:var(--sub); margin-top:10px; line-height:1.6; }
+
+  /* 민감한 사진 가리기 */
+  .p-media.blurred .m img, .p-media.blurred .m video,
+  .d-media.blurred img, .d-media.blurred video{
+    filter: blur(22px);
+    transform: scale(1.06);
+  }
+  .blur-cover{
+    position:absolute; inset:0; z-index:3;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:6px;
+    background:rgba(255,247,249,.55);
+    border-radius:12px; cursor:pointer;
+  }
+  .blur-cover .e{ font-size:22px; }
+  .blur-cover .t{
+    font-size:11px; font-weight:700; color:var(--ribbon-deep);
+    background:rgba(255,255,255,.9);
+    padding:5px 12px; border-radius:999px;
+    box-shadow:0 2px 6px rgba(217,113,143,.2);
+  }
+  .d-media{ position:relative; }
+  .d-media .blur-cover{ border-radius:14px; }
+
+  .sens-tag{
+    display:inline-flex; align-items:center; gap:4px;
+    font-size:9.5px; font-weight:700; color:#fff;
+    background:linear-gradient(180deg,#C9A5D8,#A87FC0);
+    padding:3px 9px; border-radius:999px;
+    margin-left:6px; flex-shrink:0;
+  }
   .orig-row{
     display:flex; align-items:flex-start; gap:9px;
     margin-top:14px; padding:12px 13px;
@@ -1491,6 +1522,14 @@
           </button>
         </div>
         <input type="file" id="filePick" accept="image/*,video/*" multiple hidden>
+        <div class="orig-row" id="sensRow">
+          <span class="box">✓</span>
+          <div class="orig-main">
+            <div class="orig-name">민감할 수 있는 사진</div>
+            <div class="orig-desc">피드에서 흐리게 보이고, 눌러야 열려요.<br>수위가 있거나 놀랄 만한 사진에 체크해주세요.</div>
+          </div>
+        </div>
+
         <div class="orig-row" id="origRow">
           <span class="box">✓</span>
           <div class="orig-main">
@@ -2401,7 +2440,7 @@ function avatarInner(u){
   return esc((u && u.avatar_emoji) || '🌷');
 }
 
-function mediaHtml(list){
+function mediaHtml(list, sensitive){
   if(!list || !list.length) return '';
   const items = [...list].sort((a,b) => a.sort_order - b.sort_order);
   const show = items.slice(0, 4);
@@ -2416,7 +2455,11 @@ function mediaHtml(list){
     return `<div class="m">${inner}${more}</div>`;
   }).join('');
 
-  return `<div class="p-media n${show.length}">${cells}</div>`;
+  const cover = sensitive
+    ? '<div class="blur-cover"><span class="e">🫧</span><span class="t">눌러서 보기</span></div>'
+    : '';
+
+  return `<div class="p-media n${show.length}${sensitive ? ' blurred' : ''}" style="position:relative">${cells}${cover}</div>`;
 }
 
 function postCard(p){
@@ -2430,13 +2473,13 @@ function postCard(p){
       <div class="avatar">${avatarInner(p.author)}</div>
       <div>
         <div class="p-name">${esc(p.author?.nickname || '알 수 없음')} ${hostBadge(p.author)}</div>
-        <div class="p-meta">${esc(p.boards?.label || '')} · ${timeAgo(p.created_at)}${p.view_count ? ' · 조회 ' + p.view_count : ''}</div>
+        <div class="p-meta">${esc(p.boards?.label || '')} · ${timeAgo(p.created_at)}${p.view_count ? ' · 조회 ' + p.view_count : ''}${p.sensitive ? '<span class="sens-tag">🫧 민감</span>' : ''}</div>
       </div>
       ${mine ? '<button class="p-del">⋯</button>' : ''}
     </div>
     <div class="p-title">${esc(p.title)}</div>
     <p class="p-text">${esc(p.content)}</p>
-    ${mediaHtml(p.post_media)}
+    ${mediaHtml(p.post_media, p.sensitive)}
     <div class="p-acts">
       <button class="act like${liked ? ' liked' : ''}">🎀 <b>${p.like_count || 0}</b></button>
       <span class="act">💬 ${p.comment_count || 0}</span>
@@ -2454,6 +2497,15 @@ function postCard(p){
   head.querySelector('.p-name').addEventListener('click', e => {
     e.stopPropagation(); openProfile(p.author_id);
   });
+
+  const cov = el.querySelector('.blur-cover');
+  if(cov){
+    cov.addEventListener('click', e => {
+      e.stopPropagation();
+      cov.remove();
+      el.querySelector('.p-media').classList.remove('blurred');
+    });
+  }
 
   el.addEventListener('click', () => openDetail(p.id));
 
@@ -2530,6 +2582,12 @@ const MAX_IMG_SIZE = 20 * 1024 * 1024;
 const MAX_VID_SIZE = 50 * 1024 * 1024;
 let picked = [];   // { file, kind, url(objectURL) }
 let useOriginal = false;
+let isSensitive = false;
+
+$('sensRow').addEventListener('click', () => {
+  isSensitive = !isSensitive;
+  $('sensRow').querySelector('.box').classList.toggle('on', isSensitive);
+});
 
 $('origRow').addEventListener('click', () => {
   useOriginal = !useOriginal;
@@ -2546,7 +2604,9 @@ function openWrite(){
   picked.forEach(p => URL.revokeObjectURL(p.url));
   picked = [];
   useOriginal = false;
+  isSensitive = false;
   $('origRow').querySelector('.box').classList.remove('on');
+  $('sensRow').querySelector('.box').classList.remove('on');
   renderMedia();
   screen('write');
 }
@@ -2689,7 +2749,7 @@ $('wSubmit').addEventListener('click', async () => {
   btn.disabled = true; btn.textContent = '올리는 중';
 
   const { data: post, error } = await db.from('posts').insert({
-    author_id: me.id, board_id: writeBoard, title, content
+    author_id: me.id, board_id: writeBoard, title, content, sensitive: isSensitive
   }).select('id').single();
 
   if(error){
@@ -2753,7 +2813,7 @@ async function openDetail(postId){
   $('dMove').style.display = mine ? 'block' : 'none';
 
   $('dBody').innerHTML = `
-    <span class="d-tag${isInfo ? ' g' : ''}">${esc(p.boards?.label || '')}</span>
+    <span class="d-tag${isInfo ? ' g' : ''}">${esc(p.boards?.label || '')}</span>${p.sensitive ? '<span class="sens-tag">🫧 민감할 수 있어요</span>' : ''}
     <h1 class="d-ptitle">${esc(p.title)}</h1>
     <div class="d-author">
       <div class="avatar">${avatarInner(p.author)}</div>
@@ -2769,13 +2829,30 @@ async function openDetail(postId){
     </div>`;
 
   const mediaWrap = $('dMedia');
+  if(p.sensitive && curMedia.length) mediaWrap.classList.add('blurred');
+  else mediaWrap.classList.remove('blurred');
+
   curMedia.forEach((m, i) => {
     const node = m.kind === 'video'
       ? Object.assign(document.createElement('video'), { src: m.url, controls: true, playsInline: true })
       : Object.assign(document.createElement('img'), { src: m.url, loading: 'lazy', alt: '' });
-    if(m.kind !== 'video') node.addEventListener('click', () => openLightbox(i));
+    if(m.kind !== 'video') node.addEventListener('click', () => {
+      if(mediaWrap.classList.contains('blurred')) return;
+      openLightbox(i);
+    });
     mediaWrap.appendChild(node);
   });
+
+  if(p.sensitive && curMedia.length){
+    const cover = document.createElement('div');
+    cover.className = 'blur-cover';
+    cover.innerHTML = '<span class="e">🫧</span><span class="t">민감할 수 있어요 · 눌러서 보기</span>';
+    cover.addEventListener('click', () => {
+      mediaWrap.classList.remove('blurred');
+      cover.remove();
+    });
+    mediaWrap.appendChild(cover);
+  }
 
   const auth = $('dBody').querySelector('.d-author');
   auth.style.cursor = 'pointer';
@@ -3111,19 +3188,20 @@ async function loadProfileTab(){
 
   if(pfTab === 'media'){
     const { data } = await db.from('posts')
-      .select('id, post_media(url, kind, sort_order)')
+      .select('id, sensitive, post_media(url, kind, sort_order)')
       .eq('author_id', pfUser.id)
       .order('created_at', { ascending:false });
 
     const all = [];
-    (data || []).forEach(p => (p.post_media || []).forEach(m => all.push({ ...m, postId: p.id })));
+    (data || []).forEach(p => (p.post_media || []).forEach(m =>
+      all.push({ ...m, postId: p.id, sensitive: p.sensitive })));
 
     if(!all.length){
       box.innerHTML = '<div class="c-empty" style="background:none">아직 올린 사진이 없어요 🎀</div>';
       return;
     }
     box.innerHTML = '<div class="pf-gal">' + all.map(m =>
-      `<div class="g" data-post="${m.postId}">` +
+      `<div class="g${m.sensitive ? ' blurred' : ''}" data-post="${m.postId}"${m.sensitive ? ' style="filter:blur(14px)"' : ''}>` +
       (m.kind === 'video'
         ? `<video src="${esc(m.url)}" muted playsinline></video>`
         : `<img src="${esc(m.url)}" loading="lazy" alt="">`) +
