@@ -1871,8 +1871,32 @@ document.getElementById('toLogin2').addEventListener('click', () => authPage('lo
 
 /* ===== PWA ===== */
 if('serviceWorker' in navigator){
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  window.addEventListener('load', async () => {
+    try{
+      const reg = await navigator.serviceWorker.register('/sw.js');
+      // 새 버전이 준비되면 바로 적용
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        if(!nw) return;
+        nw.addEventListener('statechange', () => {
+          if(nw.state === 'installed' && navigator.serviceWorker.controller){
+            nw.postMessage({ type: 'SKIP_WAITING' });
+          }
+        });
+      });
+      // 앱을 다시 열 때마다 새 버전 확인
+      reg.update();
+      document.addEventListener('visibilitychange', () => {
+        if(document.visibilityState === 'visible') reg.update();
+      });
+    }catch(_){}
+  });
+
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if(reloaded) return;
+    reloaded = true;
+    location.reload();
   });
 }
 
@@ -1920,7 +1944,24 @@ window.addEventListener('beforeinstallprompt', e => {
 </script>
 
 <script type="module">
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+let createClient;
+try{
+  ({ createClient } = await import('https://esm.sh/@supabase/supabase-js@2'));
+}catch(e1){
+  try{
+    ({ createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'));
+  }catch(e2){
+    document.body.insertAdjacentHTML('beforeend',
+      '<div style="position:fixed;inset:0;z-index:999;background:#FFF7F9;color:#3A2C30;' +
+      'display:flex;align-items:center;justify-content:center;text-align:center;font-family:sans-serif">' +
+      '<div style="padding:30px"><div style="font-size:40px;margin-bottom:14px">\uD83C\uDF80</div>' +
+      '<p style="font-size:14px;line-height:1.8;color:#9C8489">연결에 문제가 생겼어요.<br>새로고침해주세요.</p>' +
+      '<button onclick="location.reload()" style="margin-top:20px;font-size:14px;font-weight:700;color:#fff;' +
+      'border:none;padding:14px 28px;border-radius:999px;font-family:inherit;' +
+      'background:linear-gradient(180deg,#EC93AE,#D9718F)">다시 시도</button></div></div>');
+    throw e2;
+  }
+}
 
 const SUPABASE_URL = 'https://moljurikrtftxbexptrq.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_v4KEg3UdCNaypL_tTqrx1w_eClfbgUX';

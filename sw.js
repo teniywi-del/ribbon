@@ -1,14 +1,17 @@
-// 리본 서비스 워커
-// 새 버전을 올리면 바로 반영되도록 네트워크 우선으로 동작해요.
+// 리본 서비스 워커 v3
+// 페이지와 코드는 절대 캐시하지 않아요. 항상 최신을 받아옵니다.
+// 아이콘 같은 그림만 캐시해서 빠르게 띄워요.
 
-const CACHE = 'ribbon-v2';
-const SHELL = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
+const CACHE = 'ribbon-assets-v3';
+const ASSETS = ['/icon-192.png', '/icon-512.png', '/icon-maskable-512.png', '/icon-180.png'];
 
 self.addEventListener('install', e => {
   self.skipWaiting();
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(SHELL)).catch(() => {})
-  );
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).catch(() => {}));
+});
+
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', e => {
@@ -24,38 +27,51 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
 
   const url = new URL(req.url);
-  // 다른 사이트(수파베이스 등)는 그대로 통과
   if (url.origin !== self.location.origin) return;
 
+  const isImage = /\.(png|jpg|jpeg|gif|webp|svg|ico)$/i.test(url.pathname);
+
+  // 그림만 캐시 사용
+  if (isImage) {
+    e.respondWith(
+      caches.match(req).then(hit =>
+        hit || fetch(req).then(res => {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
+          return res;
+        })
+      )
+    );
+    return;
+  }
+
+  // HTML, JS, manifest는 무조건 최신으로
   e.respondWith(
-    fetch(req)
-      .then(res => {
-        // 최신 파일을 받아오면 캐시도 갱신
-        const copy = res.clone();
-        caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
-        return res;
-      })
-      .catch(async () => {
-        // 인터넷이 끊겼을 때만 캐시 사용
-        const hit = await caches.match(req);
-        if (hit) return hit;
-        if (req.mode === 'navigate') {
-          const shell = await caches.match('/index.html');
-          if (shell) return shell;
-        }
-        return new Response('오프라인이에요', {
-          status: 503,
-          headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-        });
-      })
+    fetch(req, { cache: 'no-store' }).catch(() =>
+      new Response(
+        '<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8">' +
+        '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+        '<title>리본</title><style>' +
+        'body{font-family:sans-serif;background:#FFF7F9;color:#3A2C30;' +
+        'display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center}' +
+        'div{padding:30px}h1{font-size:40px;margin:0 0 14px}p{font-size:14px;line-height:1.8;color:#9C8489}' +
+        'button{margin-top:20px;font-size:14px;font-weight:700;color:#fff;border:none;' +
+        'padding:14px 28px;border-radius:999px;background:linear-gradient(180deg,#EC93AE,#D9718F)}' +
+        '</style></head><body><div><h1>&#127872;</h1>' +
+        '<p>인터넷 연결을 확인해주세요.<br>연결되면 다시 열어주세요.</p>' +
+        '<button onclick="location.reload()">다시 시도</button>' +
+        '</div></body></html>',
+        { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+      )
+    )
   );
 });
 
 /* ===== 푸시 알림 ===== */
 self.addEventListener('push', e => {
-  let data = { title: '리본 🎀', body: '새 알림이 있어요' };
+  let data = { title: '리본', body: '새 알림이 있어요' };
   try {
-    if (e.data) data = { ...data, ...e.data.json() };
+    if (e.data) data = Object.assign(data, e.data.json());
   } catch (_) {
     if (e.data) data.body = e.data.text();
   }
