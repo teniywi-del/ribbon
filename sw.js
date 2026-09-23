@@ -1,7 +1,7 @@
 // 리본 서비스 워커
 // 새 버전을 올리면 바로 반영되도록 네트워크 우선으로 동작해요.
 
-const CACHE = 'ribbon-v1';
+const CACHE = 'ribbon-v2';
 const SHELL = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -48,5 +48,38 @@ self.addEventListener('fetch', e => {
           headers: { 'Content-Type': 'text/plain; charset=utf-8' }
         });
       })
+  );
+});
+
+/* ===== 푸시 알림 ===== */
+self.addEventListener('push', e => {
+  let data = { title: '리본 🎀', body: '새 알림이 있어요' };
+  try {
+    if (e.data) data = { ...data, ...e.data.json() };
+  } catch (_) {
+    if (e.data) data.body = e.data.text();
+  }
+
+  e.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      tag: data.kind ? 'ribbon-' + data.kind : 'ribbon',
+      renotify: true,
+      data: { postId: data.postId || null, kind: data.kind || null }
+    })
+  );
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const c of list) {
+        if (c.url.includes(self.location.origin) && 'focus' in c) return c.focus();
+      }
+      return self.clients.openWindow('/');
+    })
   );
 });

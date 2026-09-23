@@ -1176,6 +1176,24 @@
   .mv-item.cur{ opacity:.45; }
 
   /* 정지 배너 */
+  .push-tip{
+    display:none; align-items:center; gap:10px;
+    margin:0 18px 12px; padding:12px 14px;
+    background:linear-gradient(145deg,#FFF3F7,#FDE9F0);
+    border:1px solid var(--line); border-radius:16px;
+  }
+  .push-tip.on{ display:flex; }
+  .push-tip .ic{ font-size:20px; flex-shrink:0; }
+  .push-tip .t{ flex:1; min-width:0; font-size:11.5px; line-height:1.6; }
+  .push-tip .t b{ font-size:12.5px; }
+  .push-tip button{
+    font-family:inherit; font-size:11.5px; font-weight:700;
+    color:#fff; border:none; padding:9px 15px; border-radius:999px;
+    background:linear-gradient(180deg,var(--ribbon),var(--ribbon-deep));
+    cursor:pointer; flex-shrink:0;
+  }
+  .push-tip .x{ background:none; color:var(--sub); padding:6px; font-size:14px; }
+
   .install-tip{
     display:none; align-items:center; gap:10px;
     margin:0 18px 12px; padding:12px 14px;
@@ -1385,6 +1403,12 @@
         <div class="t"><b>리본을 홈 화면에 추가하기</b><br>앱처럼 아이콘으로 바로 열 수 있어요</div>
         <button id="installBtn">추가</button>
         <button class="x" id="installX">✕</button>
+      </div>
+      <div class="push-tip" id="pushTip">
+        <span class="ic">🔔</span>
+        <div class="t"><b>알림 받기</b><br>댓글이나 쪽지가 오면 폰으로 알려드려요</div>
+        <button id="pushBtn">켜기</button>
+        <button class="x" id="pushX">✕</button>
       </div>
       <div id="banBanner"></div>
       <div class="feed" id="feed">
@@ -2057,6 +2081,7 @@ async function enter(){
   await loadLiked();
   await loadFollowing();
   showBanBanner();
+  showPushTip();
   screen('home');
   loadFeed();
   refreshBadge();
@@ -2600,6 +2625,12 @@ async function openDetail(postId){
 
 $('dBack').addEventListener('click', () => { screen('home'); loadFeed(); });
 
+$('pushBtn').addEventListener('click', enablePush);
+$('pushX').addEventListener('click', () => {
+  $('pushTip').classList.remove('on');
+  localStorage.setItem('rb_push_hide', '1');
+});
+
 $('dMove').addEventListener('click', openMove);
 $('mvClose').addEventListener('click', () => $('moveSheet').classList.remove('on'));
 $('moveSheet').addEventListener('click', e => {
@@ -3060,6 +3091,79 @@ $('rpSend').addEventListener('click', async () => {
   $('reportSheet').classList.remove('on');
   toast('신고를 접수했어요. 확인 후 조치할게요 🎀', 'good');
 });
+
+/* ================= 푸시 알림 ================= */
+const VAPID_PUBLIC = 'BMTpRdStj6eYt1xIbSOApO_AYyEGz1ZEmYRQfn0xghKoqWso_aJsHL5ywC15p23z8h3G42T6NevvAoqWLmQV4PQ';
+
+function urlBase64ToUint8Array(base64String){
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  const arr = new Uint8Array(raw.length);
+  for(let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return arr;
+}
+
+function pushSupported(){
+  return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+}
+
+async function showPushTip(){
+  const tip = $('pushTip');
+  if(!tip) return;
+  tip.classList.remove('on');
+
+  if(!pushSupported()) return;
+  if(Notification.permission === 'denied') return;
+  if(localStorage.getItem('rb_push_hide')) return;
+
+  // 이미 구독했으면 안 보여줌
+  if(Notification.permission === 'granted'){
+    const reg = await navigator.serviceWorker.getRegistration();
+    const sub = reg && await reg.pushManager.getSubscription();
+    if(sub){ await savePushSub(sub); return; }
+  }
+
+  tip.classList.add('on');
+}
+
+async function savePushSub(sub){
+  if(!me || !sub) return;
+  const j = sub.toJSON();
+  if(!j.keys) return;
+  await db.from('push_subs').upsert({
+    user_id: me.id,
+    endpoint: j.endpoint,
+    p256dh: j.keys.p256dh,
+    auth: j.keys.auth
+  }, { onConflict: 'endpoint' });
+}
+
+async function enablePush(){
+  if(!pushSupported()) return toast('이 브라우저에서는 알림을 쓸 수 없어요', 'bad');
+
+  const perm = await Notification.requestPermission();
+  if(perm !== 'granted'){
+    $('pushTip').classList.remove('on');
+    return toast('알림이 거부되었어요. 폰 설정에서 바꿀 수 있어요', 'bad');
+  }
+
+  try{
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if(!sub){
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC)
+      });
+    }
+    await savePushSub(sub);
+    $('pushTip').classList.remove('on');
+    toast('알림을 켰어요 🎀', 'good');
+  }catch(e){
+    toast('알림 설정에 실패했어요: ' + (e.message || ''), 'bad');
+  }
+}
 
 function showBanBanner(){
   const box = $('banBanner');
