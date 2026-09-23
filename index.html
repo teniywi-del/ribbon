@@ -272,6 +272,40 @@
   }
   .loading{ text-align:center; padding:50px 0; color:var(--sub); font-size:12.5px; }
 
+  /* 더 불러오는 중 */
+  .more-load{
+    display:flex; align-items:center; justify-content:center; gap:7px;
+    padding:22px 0 8px; color:var(--sub); font-size:12px;
+  }
+  .more-load .dots{ display:flex; gap:4px; }
+  .more-load .dots i{
+    width:6px; height:6px; border-radius:50%;
+    background:var(--ribbon); display:block; animation:bounce 1.2s infinite;
+  }
+  .more-load .dots i:nth-child(2){ animation-delay:.15s; }
+  .more-load .dots i:nth-child(3){ animation-delay:.3s; }
+  .feed-end{
+    text-align:center; padding:26px 0 10px;
+    color:#D9BFC7; font-size:11.5px; letter-spacing:.5px;
+  }
+
+  /* 당겨서 새로고침 */
+  .pull{
+    position:absolute; left:0; right:0; top:0;
+    display:flex; align-items:center; justify-content:center;
+    height:0; overflow:hidden;
+    color:var(--ribbon-deep); font-size:12px; font-weight:700;
+    pointer-events:none; z-index:6;
+  }
+  .pull .ico{
+    display:inline-block; font-size:17px; margin-right:6px;
+    transition:transform .2s;
+  }
+  .pull.ready .ico{ transform:rotate(180deg); }
+  .pull.spin .ico{ animation:spin .8s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  #homeScreen .scroll{ position:relative; }
+
   .nav{
     display:flex; border-top:1px solid var(--line);
     background:#FFFCFD; flex-shrink:0;
@@ -1397,7 +1431,8 @@
 
     <div class="subbar" id="subbar"></div>
 
-    <div class="scroll">
+    <div class="scroll" id="homeScroll">
+      <div class="pull" id="pullInd"><span class="ico">↓</span><span id="pullText">당겨서 새로고침</span></div>
       <div class="install-tip" id="installTip">
         <span class="ic">🎀</span>
         <div class="t"><b>리본을 홈 화면에 추가하기</b><br>앱처럼 아이콘으로 바로 열 수 있어요</div>
@@ -2155,10 +2190,12 @@ $('zInfo').addEventListener('click', () => {
 $('refreshBtn').addEventListener('click', () => loadFeed());
 
 /* ================= 피드 ================= */
-async function loadFeed(){
-  const feed = $('feed');
-  feed.innerHTML = '<div class="loading">불러오는 중...</div>';
+const PAGE = 20;
+let feedPage = 0;
+let feedEnd = false;
+let feedLoading = false;
 
+function feedQuery(){
   const zoneBoards = boards.filter(b => b.zone === zone).map(b => b.id);
   const targets = boardFilter ? [boardFilter] : zoneBoards;
 
@@ -2170,14 +2207,24 @@ async function loadFeed(){
     const ids = [...followingSet, me.id];
     q = q.in('author_id', ids);
   }
+  return q;
+}
 
-  q = q.order('created_at', { ascending:false }).limit(50);
+async function loadFeed(){
+  const feed = $('feed');
+  feedPage = 0; feedEnd = false; feedLoading = true;
+  feed.innerHTML = '<div class="loading">불러오는 중...</div>';
 
-  const { data, error } = await q;
+  const { data, error } = await feedQuery()
+    .order('created_at', { ascending:false })
+    .range(0, PAGE - 1);
+
+  feedLoading = false;
 
   if(error){ feed.innerHTML = '<div class="loading">' + esc(ko(error.message)) + '</div>'; return; }
 
   if(!data || !data.length){
+    feedEnd = true;
     if(zone === 'room' && scope === 'fol'){
       feed.innerHTML = `
         <div class="empty">
@@ -2204,7 +2251,94 @@ async function loadFeed(){
 
   feed.innerHTML = '';
   data.forEach(p => feed.appendChild(postCard(p)));
+  if(data.length < PAGE) markFeedEnd();
 }
+
+async function loadMoreFeed(){
+  if(feedLoading || feedEnd) return;
+  feedLoading = true;
+  feedPage++;
+
+  const feed = $('feed');
+  const spinner = document.createElement('div');
+  spinner.className = 'more-load';
+  spinner.innerHTML = '<div class="dots"><i></i><i></i><i></i></div><span>더 불러오는 중</span>';
+  feed.appendChild(spinner);
+
+  const from = feedPage * PAGE;
+  const { data, error } = await feedQuery()
+    .order('created_at', { ascending:false })
+    .range(from, from + PAGE - 1);
+
+  spinner.remove();
+  feedLoading = false;
+
+  if(error){ feedPage--; return; }
+
+  if(!data || !data.length){ markFeedEnd(); return; }
+
+  data.forEach(p => feed.appendChild(postCard(p)));
+  if(data.length < PAGE) markFeedEnd();
+}
+
+function markFeedEnd(){
+  feedEnd = true;
+  const feed = $('feed');
+  if(feed.querySelector('.feed-end')) return;
+  if(!feed.querySelector('.post')) return;
+  const e = document.createElement('div');
+  e.className = 'feed-end';
+  e.textContent = '🎀 여기까지가 전부예요';
+  feed.appendChild(e);
+}
+
+/* 스크롤 끝에 닿으면 더 불러오기 */
+$('homeScroll').addEventListener('scroll', () => {
+  const el = $('homeScroll');
+  if(el.scrollHeight - el.scrollTop - el.clientHeight < 400) loadMoreFeed();
+}, { passive:true });
+
+/* ===== 당겨서 새로고침 ===== */
+(function setupPull(){
+  const box = $('homeScroll');
+  const ind = $('pullInd');
+  const txt = $('pullText');
+  const THRESHOLD = 70;
+  let startY = 0, pulling = false, dist = 0;
+
+  box.addEventListener('touchstart', e => {
+    if(box.scrollTop > 0 || feedLoading) return;
+    startY = e.touches[0].clientY;
+    pulling = true; dist = 0;
+  }, { passive:true });
+
+  box.addEventListener('touchmove', e => {
+    if(!pulling) return;
+    dist = e.touches[0].clientY - startY;
+    if(dist <= 0){ ind.style.height = '0px'; return; }
+    const h = Math.min(dist * 0.5, 80);
+    ind.style.height = h + 'px';
+    ind.classList.toggle('ready', h >= THRESHOLD * 0.5);
+    txt.textContent = h >= THRESHOLD * 0.5 ? '놓으면 새로고침' : '당겨서 새로고침';
+  }, { passive:true });
+
+  box.addEventListener('touchend', async () => {
+    if(!pulling) return;
+    pulling = false;
+    const h = parseFloat(ind.style.height) || 0;
+
+    if(h >= THRESHOLD * 0.5){
+      ind.style.height = '44px';
+      ind.classList.add('spin');
+      txt.textContent = '새로고침 중';
+      await loadFeed();
+      await loadLiked();
+      refreshBadge();
+      ind.classList.remove('spin', 'ready');
+    }
+    ind.style.height = '0px';
+  }, { passive:true });
+})();
 
 const CROWN = '<svg viewBox="0 0 24 18"><path d="M2 16h20l1.4-11.3a.6.6 0 0 0-1-.5L17 8.4 12.6 1a.7.7 0 0 0-1.2 0L7 8.4 1.6 4.2a.6.6 0 0 0-1 .5L2 16z"/></svg>';
 
