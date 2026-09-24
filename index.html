@@ -1278,6 +1278,22 @@
   .rp-acts .del{ border-color:#E89898; color:#C96B6B; }
   .rp-acts .ok{ border-color:#A8D5B5; color:#5F9E74; }
 
+  .noti-form{ padding:4px 18px 24px; }
+  .noti-form .label{ margin-top:14px; }
+  .noti-send{
+    width:100%; margin-top:18px;
+    font-family:inherit; font-size:14px; font-weight:700;
+    color:#fff; border:none; padding:15px; border-radius:999px;
+    background:linear-gradient(180deg,var(--ribbon),var(--ribbon-deep));
+    box-shadow:0 5px 13px rgba(217,113,143,0.3); cursor:pointer;
+  }
+  .noti-send:disabled{ opacity:.55; }
+  .noti-note{
+    font-size:11px; color:var(--sub); line-height:1.7;
+    background:var(--soft); border:1px dashed var(--line);
+    border-radius:13px; padding:12px 13px; margin-top:14px;
+  }
+
   .adm-search{ display:flex; gap:7px; padding:0 18px 12px; }
   .adm-search input{
     flex:1; border:1.5px solid var(--line); background:var(--soft);
@@ -1650,6 +1666,14 @@
           </button>
         </div>
         <input type="file" id="filePick" accept="image/*,video/*" multiple hidden>
+        <div class="orig-row" id="notifyRow" style="display:none">
+          <span class="box">✓</span>
+          <div class="orig-main">
+            <div class="orig-name">📢 전체에게 알림 보내기</div>
+            <div class="orig-desc">모든 회원에게 알림이 가요.<br>중요한 공지일 때만 써주세요.</div>
+          </div>
+        </div>
+
         <div class="orig-row" id="sensRow">
           <span class="box">✓</span>
           <div class="orig-main">
@@ -1855,6 +1879,7 @@
       <button class="adm-tab" data-adm="closed">처리 완료</button>
       <button class="adm-tab" data-adm="users">회원</button>
       <button class="adm-tab" data-adm="boards">게시판</button>
+      <button class="adm-tab" data-adm="notice">공지</button>
     </div>
     <div class="scroll" id="admScroll">
       <div id="admBody"></div>
@@ -2714,6 +2739,12 @@ const MAX_VID_SIZE = 50 * 1024 * 1024;
 let picked = [];   // { file, kind, url(objectURL) }
 let useOriginal = false;
 let isSensitive = false;
+let notifyAll = false;
+
+$('notifyRow').addEventListener('click', () => {
+  notifyAll = !notifyAll;
+  $('notifyRow').querySelector('.box').classList.toggle('on', notifyAll);
+});
 
 $('sensRow').addEventListener('click', () => {
   isSensitive = !isSensitive;
@@ -2736,8 +2767,11 @@ function openWrite(){
   picked = [];
   useOriginal = false;
   isSensitive = false;
+  notifyAll = false;
   $('origRow').querySelector('.box').classList.remove('on');
   $('sensRow').querySelector('.box').classList.remove('on');
+  $('notifyRow').querySelector('.box').classList.remove('on');
+  $('notifyRow').style.display = isStaff(me) ? 'flex' : 'none';
   renderMedia();
   screen('write');
 }
@@ -2909,7 +2943,18 @@ $('wSubmit').addEventListener('click', async () => {
   $('zInfo').classList.toggle('on', zone === 'info');
   buildBoardChips();
 
-  toast('글을 올렸어요 🎀', 'good');
+  if(notifyAll && isStaff(me)){
+    const { data: n, error: nErr } = await db.rpc('notify_all', {
+      p_actor: me.id,
+      p_preview: title,
+      p_post_id: post.id
+    });
+    if(nErr) toast('글은 올렸는데 알림은 실패했어요', 'bad');
+    else toast(`글을 올리고 ${n}명에게 알렸어요 🎀`, 'good');
+  } else {
+    toast('글을 올렸어요 🎀', 'good');
+  }
+
   screen('home');
   loadFeed();
 });
@@ -3809,6 +3854,7 @@ async function loadAdmin(){
 
   if(admTab === 'users') return loadAdminUsers();
   if(admTab === 'boards') return loadAdminBoards();
+  if(admTab === 'notice') return loadAdminNotice();
 
   const { data, error } = await db.from('reports')
     .select('*, reporter:profiles!reports_reporter_id_fkey(nickname), target:profiles!reports_target_user_id_fkey(nickname), posts(id, title), comments(id, content)')
@@ -4014,6 +4060,49 @@ $('noteSave').addEventListener('click', async () => {
   toast('처리하고 신고자에게 알렸어요 🎀', 'good');
   loadAdmin();
 });
+
+async function loadAdminNotice(){
+  const box = $('admBody');
+
+  const { count } = await db.from('profiles').select('id', { count:'exact', head:true });
+
+  box.innerHTML = `
+    <div class="noti-form">
+      <label class="label">알림 내용</label>
+      <textarea class="input" id="ntMsg" maxlength="200"
+        placeholder="예) 새 게시판이 열렸어요! 확인해주세요 🎀"></textarea>
+
+      <div class="noti-note">
+        · 지금 회원 <b>${(count || 1) - 1}명</b>에게 알림이 가요<br>
+        · 앱 알림 + 폰 푸시가 함께 나가요<br>
+        · 자주 보내면 알림을 꺼버리는 분이 생겨요. 중요한 것만!<br>
+        · 글에 연결하려면 <b>공지 게시판에 글을 쓸 때</b> 「전체에게 알림 보내기」를 체크하는 게 좋아요
+      </div>
+
+      <button class="noti-send" id="ntSend">전체에게 알림 보내기</button>
+    </div>`;
+
+  $('ntSend').addEventListener('click', async () => {
+    const msg = $('ntMsg').value.trim();
+    if(!msg) return toast('알림 내용을 입력해주세요', 'bad');
+    if(!confirm(`${(count || 1) - 1}명에게 알림을 보낼까요?\n\n"${msg}"`)) return;
+
+    const btn = $('ntSend');
+    btn.disabled = true; btn.textContent = '보내는 중...';
+
+    const { data: n, error } = await db.rpc('notify_all', {
+      p_actor: me.id,
+      p_preview: msg,
+      p_post_id: null
+    });
+
+    btn.disabled = false; btn.textContent = '전체에게 알림 보내기';
+    if(error) return toast(ko(error.message), 'bad');
+
+    $('ntMsg').value = '';
+    toast(`${n}명에게 알림을 보냈어요 🎀`, 'good');
+  });
+}
 
 async function loadAdminBoards(){
   const box = $('admBody');
