@@ -838,6 +838,7 @@
   .pf-gal img, .pf-gal video{ width:100%; height:100%; object-fit:cover; display:block; }
 
   /* 프로필 수정 모달 */
+  #docSheet{ z-index:180; }
   .sheet{
     position:fixed; inset:0; z-index:150;
     background:rgba(58,44,48,.45);
@@ -1958,8 +1959,8 @@
       </div>
       <div class="doc-body" id="docBody"></div>
       <div class="doc-links">
-        <button id="docTerms">이용약관</button>
-        <button id="docPrivacy">개인정보 처리방침</button>
+        <button data-doc="terms">이용약관</button>
+        <button data-doc="privacy">개인정보 처리방침</button>
       </div>
     </div>
   </div>
@@ -2092,8 +2093,8 @@
       </div>
 
       <div class="doc-links" style="margin-top:14px">
-        <button id="edTerms">이용약관</button>
-        <button id="edPrivacy">개인정보 처리방침</button>
+        <button data-doc="terms">이용약관</button>
+        <button data-doc="privacy">개인정보 처리방침</button>
       </div>
 
       <button class="pf-btn" id="edLogout" style="margin-top:10px; width:100%">로그아웃</button>
@@ -3913,21 +3914,19 @@ function openDoc(kind){
   $('docSheet').classList.add('on');
 }
 
-document.querySelectorAll('.view[data-doc]').forEach(v => {
-  v.addEventListener('click', e => {
+/* 문서 전체에서 클릭을 받아 처리 (어느 화면에서든 동작) */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-doc]');
+  if(t){
+    e.preventDefault();
     e.stopPropagation();
-    openDoc(v.dataset.doc);
-  });
+    openDoc(t.dataset.doc);
+    return;
+  }
+  if(e.target.id === 'docClose' || e.target.id === 'docSheet'){
+    $('docSheet').classList.remove('on');
+  }
 });
-
-$('docClose').addEventListener('click', () => $('docSheet').classList.remove('on'));
-$('docSheet').addEventListener('click', e => {
-  if(e.target === $('docSheet')) $('docSheet').classList.remove('on');
-});
-$('docTerms').addEventListener('click', () => openDoc('terms'));
-$('edTerms').addEventListener('click', () => openDoc('terms'));
-$('edPrivacy').addEventListener('click', () => openDoc('privacy'));
-$('docPrivacy').addEventListener('click', () => openDoc('privacy'));
 
 /* ================= 내 신고 내역 ================= */
 const ST_LABEL = {
