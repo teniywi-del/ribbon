@@ -839,6 +839,25 @@
 
   /* 프로필 수정 모달 */
   #docSheet{ z-index:180; }
+  #quitSheet{ z-index:190; }
+
+  .quit-link{
+    display:block; margin:16px auto 0;
+    font-family:inherit; font-size:11.5px; color:var(--sub);
+    background:none; border:none; cursor:pointer;
+    text-decoration:underline; text-underline-offset:3px;
+  }
+  .quit-warn{
+    background:var(--warn-bg); border:1px solid var(--warn-line);
+    border-radius:14px; padding:14px 15px; margin-bottom:16px;
+    font-size:12px; line-height:1.8; color:#A96A6A;
+  }
+  .quit-warn b{ color:#C05858; }
+  .quit-warn ul{ margin:8px 0 0 16px; }
+  .quit-warn li{ margin-bottom:4px; }
+  .quit-confirm{
+    font-size:12px; color:var(--sub); line-height:1.7; margin-bottom:8px;
+  }
   .sheet{
     position:fixed; inset:0; z-index:150;
     background:rgba(58,44,48,.45);
@@ -1965,6 +1984,37 @@
     </div>
   </div>
 
+  <!-- 회원 탈퇴 -->
+  <div class="sheet" id="quitSheet">
+    <div class="sheet-box">
+      <div class="fl-head">
+        <div class="sheet-t">회원 탈퇴</div>
+        <button class="fl-close" id="quitClose">✕</button>
+      </div>
+
+      <div class="quit-warn">
+        <b>탈퇴하면 되돌릴 수 없어요.</b>
+        <ul>
+          <li>계정과 프로필이 삭제돼요</li>
+          <li>같은 이메일로 다시 가입할 수 있어요</li>
+          <li><b>올린 글과 댓글은 남고</b> 작성자만 「알 수 없음」으로 바뀌어요</li>
+          <li>글까지 지우고 싶다면 <b>탈퇴 전에 직접 삭제</b>해주세요</li>
+          <li>주고받은 쪽지는 상대방 화면에 남아요</li>
+        </ul>
+      </div>
+
+      <div class="field">
+        <p class="quit-confirm">정말 탈퇴하시려면 아래에 <b style="color:var(--ribbon-deep)">탈퇴합니다</b> 라고 입력해주세요.</p>
+        <input class="input" id="quitWord" placeholder="탈퇴합니다" autocomplete="off">
+      </div>
+
+      <div class="sheet-actions">
+        <button class="sheet-cancel" id="quitCancel">돌아가기</button>
+        <button class="sheet-save danger" id="quitGo">탈퇴하기</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 내 신고 내역 -->
   <div class="sheet" id="myRpSheet">
     <div class="sheet-box">
@@ -2098,6 +2148,7 @@
       </div>
 
       <button class="pf-btn" id="edLogout" style="margin-top:10px; width:100%">로그아웃</button>
+      <button class="quit-link" id="edQuit">회원 탈퇴</button>
     </div>
   </div>
 
@@ -3819,7 +3870,7 @@ const DOC_TERMS = `
 
 <h3>제8조 (탈퇴)</h3>
 <ul>
-<li>언제든 탈퇴할 수 있습니다.</li>
+<li>프로필 수정 하단의 <b>「회원 탈퇴」</b>에서 언제든 직접 탈퇴할 수 있습니다.</li>
 <li>탈퇴 시 계정 정보는 삭제되지만, <b>이미 올린 글과 댓글은 남으며 작성자는 "알 수 없음"으로 표시</b>됩니다. 다른 회원들의 대화 흐름을 지키기 위함입니다.</li>
 <li>글까지 지우고 싶다면 탈퇴 전에 직접 삭제해주세요.</li>
 </ul>
@@ -3887,7 +3938,7 @@ const DOC_PRIVACY = `
 <ul>
 <li>프로필 수정에서 닉네임·사진·소개를 언제든 바꿀 수 있습니다.</li>
 <li>내가 올린 글과 댓글은 직접 삭제할 수 있습니다.</li>
-<li>탈퇴를 원하시면 운영자에게 알려주세요.</li>
+<li>프로필 수정 하단의 「회원 탈퇴」로 직접 탈퇴할 수 있습니다.</li>
 <li>내 정보를 어떻게 쓰고 있는지 궁금하면 문의해주세요.</li>
 </ul>
 
@@ -3925,6 +3976,66 @@ document.addEventListener('click', e => {
   }
   if(e.target.id === 'docClose' || e.target.id === 'docSheet'){
     $('docSheet').classList.remove('on');
+  }
+});
+
+/* ================= 회원 탈퇴 ================= */
+$('edQuit').addEventListener('click', () => {
+  $('quitWord').value = '';
+  $('editSheet').classList.remove('on');
+  $('quitSheet').classList.add('on');
+});
+
+$('quitClose').addEventListener('click', () => $('quitSheet').classList.remove('on'));
+$('quitCancel').addEventListener('click', () => $('quitSheet').classList.remove('on'));
+$('quitSheet').addEventListener('click', e => {
+  if(e.target === $('quitSheet')) $('quitSheet').classList.remove('on');
+});
+
+$('quitGo').addEventListener('click', async () => {
+  const word = $('quitWord').value.trim();
+  if(word !== '탈퇴합니다'){
+    return toast('「탈퇴합니다」 라고 정확히 입력해주세요', 'bad');
+  }
+
+  const btn = $('quitGo');
+  btn.disabled = true; btn.textContent = '탈퇴하는 중...';
+
+  try{
+    const { data: sess } = await db.auth.getSession();
+    const token = sess?.session?.access_token;
+    if(!token) throw new Error('로그인 정보를 찾을 수 없어요');
+
+    const res = await fetch(SUPABASE_URL + '/functions/v1/delete-account', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const out = await res.json();
+    if(!res.ok || out.error) throw new Error(out.error || '탈퇴에 실패했어요');
+
+    // 로컬 정리
+    try{
+      const reg = await navigator.serviceWorker?.getRegistration();
+      const sub = reg && await reg.pushManager.getSubscription();
+      if(sub) await sub.unsubscribe();
+    }catch(_){}
+
+    await db.auth.signOut();
+    localStorage.clear();
+    sessionStorage.clear();
+
+    $('quitSheet').classList.remove('on');
+    me = null;
+    toast('탈퇴가 완료되었어요. 그동안 고마웠어요 🎀', 'good');
+    setTimeout(() => location.reload(), 1600);
+
+  }catch(e){
+    btn.disabled = false; btn.textContent = '탈퇴하기';
+    toast(e.message || '탈퇴에 실패했어요', 'bad');
   }
 });
 
