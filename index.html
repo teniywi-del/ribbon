@@ -2678,6 +2678,42 @@ function markFeedEnd(){
   feed.appendChild(e);
 }
 
+/* 홈으로 돌아가기 — 피드 다시 안 부르고 스크롤 유지 */
+let savedScroll = 0;
+
+function backToHome(){
+  syncCardCounts();
+  screen('home');
+  // 피드가 비어 있을 때만 다시 불러옴
+  if(!$('feed').querySelector('.post') && !$('feed').querySelector('.empty')){
+    loadFeed();
+  } else {
+    // 브라우저가 스크롤을 건드릴 수 있어 한 박자 뒤 복원
+    requestAnimationFrame(() => { $('homeScroll').scrollTop = savedScroll; });
+  }
+}
+
+/* 상세에서 바뀐 좋아요·댓글 수를 피드 카드에 반영 */
+function syncCardCounts(){
+  if(!curPost) return;
+  const cards = $('feed').querySelectorAll('.post');
+  cards.forEach(card => {
+    if(card._postId !== curPost.id) return;
+    const likeBtn = card.querySelector('.like');
+    if(likeBtn){
+      const liked = likedSet.has(curPost.id);
+      likeBtn.classList.toggle('liked', liked);
+      const b = likeBtn.querySelector('b');
+      const d = $('dBody').querySelector('.like span');
+      if(b && d) b.textContent = d.textContent;
+    }
+  });
+}
+
+function rememberScroll(){
+  savedScroll = $('homeScroll').scrollTop;
+}
+
 /* 스크롤 끝에 닿으면 더 불러오기 */
 $('homeScroll').addEventListener('scroll', () => {
   const el = $('homeScroll');
@@ -2770,6 +2806,7 @@ function mediaHtml(list, sensitive){
 
 function postCard(p){
   const el = document.createElement('div');
+  el._postId = p.id;
   el.className = 'post' + (p.boards?.zone === 'info' ? ' info' : '');
   const liked = likedSet.has(p.id);
   const mine = me && (p.author_id === me.id || isStaff(me));
@@ -3115,6 +3152,7 @@ let curMedia = [];
 let replyTo = null;
 
 async function openDetail(postId){
+  if($('homeScreen').classList.contains('on')) rememberScroll();
   screen('detail');
   $('dBody').innerHTML = '<div class="loading">불러오는 중...</div>';
   $('comments').innerHTML = '';
@@ -3216,7 +3254,7 @@ async function openDetail(postId){
   }catch{}
 }
 
-$('dBack').addEventListener('click', () => { screen('home'); loadFeed(); });
+$('dBack').addEventListener('click', backToHome);
 
 $('pushBtn').addEventListener('click', enablePush);
 $('pushX').addEventListener('click', () => {
@@ -3265,6 +3303,7 @@ $('dDelete').addEventListener('click', async () => {
   const { error } = await db.from('posts').delete().eq('id', curPost.id);
   if(error) return toast(ko(error.message), 'bad');
   toast('글을 삭제했어요');
+  savedScroll = 0;
   screen('home'); loadFeed();
 });
 
@@ -3543,6 +3582,7 @@ let pfUser = null;      // 보고 있는 프로필 주인
 let pfTab = 'room';
 
 async function openProfile(userId){
+  if($('homeScreen').classList.contains('on')) rememberScroll();
   screen('profile');
   $('pfContent').innerHTML = '<div class="loading">불러오는 중...</div>';
   pfTab = 'room';
@@ -3677,7 +3717,7 @@ async function loadProfileTab(){
   box.appendChild(list);
 }
 
-$('pfBack').addEventListener('click', () => { screen('home'); loadFeed(); });
+$('pfBack').addEventListener('click', backToHome);
 
 async function toggleFollow(targetId, btn){
   if(!me || targetId === me.id) return;
@@ -5563,7 +5603,16 @@ async function sendMessage(){
 document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', () => {
     const go = item.dataset.go;
-    if(go === 'home'){ screen('home'); loadFeed(); }
+    if(go === 'home'){
+      if($('homeScreen').classList.contains('on')){
+        // 이미 홈이면 맨 위로 + 새로고침
+        $('homeScroll').scrollTop = 0;
+        savedScroll = 0;
+        loadFeed();
+      } else {
+        backToHome();
+      }
+    }
     else if(go === 'write') openWrite();
     else if(go === 'explore') openExplore();
     else if(go === 'noti') openNoti();
