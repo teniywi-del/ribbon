@@ -1278,6 +1278,42 @@
   .rp-acts .del{ border-color:#E89898; color:#C96B6B; }
   .rp-acts .ok{ border-color:#A8D5B5; color:#5F9E74; }
 
+  /* 약관 보기 */
+  .term-row .view{
+    margin-left:auto; font-size:11px; color:var(--ribbon-deep);
+    font-weight:700; text-decoration:underline; text-underline-offset:3px;
+    padding:2px 4px; flex-shrink:0;
+  }
+  .doc-body{
+    max-height:64vh; overflow-y:auto;
+    font-size:12.5px; line-height:1.85; color:var(--text);
+    padding-right:4px;
+  }
+  .doc-body h3{
+    font-family:'Gowun Batang',serif; font-size:14px;
+    color:var(--ribbon-deep); letter-spacing:.5px;
+    margin:20px 0 8px;
+  }
+  .doc-body h3:first-child{ margin-top:4px; }
+  .doc-body p{ margin-bottom:9px; }
+  .doc-body ul{ margin:0 0 10px 16px; }
+  .doc-body li{ margin-bottom:5px; }
+  .doc-body b{ color:var(--ribbon-deep); }
+  .doc-date{
+    font-size:11px; color:var(--sub); text-align:right;
+    margin-top:18px; padding-top:12px;
+    border-top:1px dashed var(--line);
+  }
+  .doc-links{
+    display:flex; gap:8px; margin-top:12px;
+  }
+  .doc-links button{
+    flex:1; font-family:inherit; font-size:12px; font-weight:700;
+    color:var(--ribbon-deep); background:var(--card);
+    border:1.5px solid var(--ribbon);
+    padding:12px 0; border-radius:999px; cursor:pointer;
+  }
+
   .noti-form{ padding:4px 18px 24px; }
   .noti-form .label{ margin-top:14px; }
   .noti-send{
@@ -1548,6 +1584,11 @@
         <button class="btn-primary" id="loginBtn">로그인</button>
         <div class="row-sub"><button class="link" id="resetBtn">비밀번호를 잊으셨나요?</button></div>
         <div class="bottom-switch">아직 계정이 없으신가요?<button id="toSignup">가입하기</button></div>
+        <div style="text-align:center;margin-top:20px;font-size:11px;color:var(--sub);position:relative;z-index:1">
+          <span class="view" data-doc="terms" style="cursor:pointer;text-decoration:underline;text-underline-offset:3px">이용약관</span>
+          <span style="margin:0 6px;opacity:.4">·</span>
+          <span class="view" data-doc="privacy" style="cursor:pointer;text-decoration:underline;text-underline-offset:3px">개인정보 처리방침</span>
+        </div>
       </div>
 
       <!-- 회원가입 -->
@@ -1579,8 +1620,8 @@
         </div>
         <div class="terms">
           <div class="term-row all" id="termAll"><span class="box">✓</span><span>전체 동의</span></div>
-          <div class="term-row t1"><span class="box">✓</span><span>이용약관 동의</span><span class="opt">(필수)</span></div>
-          <div class="term-row t1"><span class="box">✓</span><span>개인정보 처리방침 동의</span><span class="opt">(필수)</span></div>
+          <div class="term-row t1"><span class="box">✓</span><span>이용약관 동의</span><span class="opt">(필수)</span><span class="view" data-doc="terms">보기</span></div>
+          <div class="term-row t1"><span class="box">✓</span><span>개인정보 처리방침 동의</span><span class="opt">(필수)</span><span class="view" data-doc="privacy">보기</span></div>
           <div class="term-row t1"><span class="box">✓</span><span>만 14세 이상입니다</span><span class="opt">(필수)</span></div>
           <div class="term-row t1"><span class="box">✓</span><span>마케팅 알림 수신</span><span class="opt">(선택)</span></div>
         </div>
@@ -1908,6 +1949,21 @@
     </div>
   </div>
 
+  <!-- 약관 / 개인정보 -->
+  <div class="sheet" id="docSheet">
+    <div class="sheet-box">
+      <div class="fl-head">
+        <div class="sheet-t" id="docTitle">이용약관</div>
+        <button class="fl-close" id="docClose">✕</button>
+      </div>
+      <div class="doc-body" id="docBody"></div>
+      <div class="doc-links">
+        <button id="docTerms">이용약관</button>
+        <button id="docPrivacy">개인정보 처리방침</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 내 신고 내역 -->
   <div class="sheet" id="myRpSheet">
     <div class="sheet-box">
@@ -2035,7 +2091,12 @@
         <button class="sheet-save" id="edSave">저장</button>
       </div>
 
-      <button class="pf-btn" id="edLogout" style="margin-top:14px; width:100%">로그아웃</button>
+      <div class="doc-links" style="margin-top:14px">
+        <button id="edTerms">이용약관</button>
+        <button id="edPrivacy">개인정보 처리방침</button>
+      </div>
+
+      <button class="pf-btn" id="edLogout" style="margin-top:10px; width:100%">로그아웃</button>
     </div>
   </div>
 
@@ -3696,6 +3757,177 @@ function showBanBanner(){
       </div>
     </div>`;
 }
+
+
+/* ================= 이용약관 / 개인정보 ================= */
+const DOC_DATE = '2026년 9월 24일';
+
+const DOC_TERMS = `
+<h3>제1조 (목적)</h3>
+<p>이 약관은 <b>리본</b>(이하 "서비스")을 이용하는 데 필요한 사항을 정합니다. 서비스는 AI 채팅(앵챗)을 즐기는 사람들이 프롬프트와 결과물, 일상을 나누는 커뮤니티입니다.</p>
+
+<h3>제2조 (회원가입)</h3>
+<ul>
+<li>이메일과 비밀번호로 가입하며, 닉네임을 정해 활동합니다.</li>
+<li><b>만 14세 이상</b>만 가입할 수 있습니다.</li>
+<li>타인을 사칭하거나 운영진으로 오해할 수 있는 닉네임은 제한될 수 있습니다.</li>
+</ul>
+
+<h3>제3조 (서비스 이용)</h3>
+<ul>
+<li>서비스는 무료로 제공됩니다.</li>
+<li>회원은 글·댓글·사진·쪽지를 자유롭게 주고받을 수 있습니다.</li>
+<li>서버 점검이나 문제 발생 시 서비스가 일시 중단될 수 있습니다.</li>
+</ul>
+
+<h3>제4조 (금지 행위)</h3>
+<p>다음 행위는 금지되며, 발견 시 게시물 삭제나 이용 제한이 있을 수 있습니다.</p>
+<ul>
+<li>욕설, 비방, 혐오 표현, 특정인을 저격하는 글</li>
+<li>같은 내용을 반복해서 올리는 도배</li>
+<li>상업적 광고, 스팸, 외부 사이트 홍보</li>
+<li>음란물, 폭력적이거나 혐오감을 주는 게시물</li>
+<li>타인의 그림·사진·글을 허락 없이 가져와 자기 것처럼 올리는 행위</li>
+<li>타인의 개인정보를 동의 없이 올리는 행위</li>
+<li>사칭, 다중 계정을 이용한 여론 조작</li>
+<li>서비스를 비정상적인 방법으로 이용하거나 방해하는 행위</li>
+</ul>
+
+<h3>제5조 (게시물의 권리)</h3>
+<ul>
+<li>회원이 올린 글과 사진의 <b>권리는 작성자 본인</b>에게 있습니다.</li>
+<li>서비스는 해당 게시물을 서비스 화면에 보여주는 범위에서만 이용합니다.</li>
+<li>다른 회원의 게시물을 무단으로 퍼가거나 외부에 올리지 말아주세요.</li>
+</ul>
+
+<h3>제6조 (게시물 관리)</h3>
+<ul>
+<li>신고가 접수되면 운영자가 확인 후 조치합니다. 처리 결과는 신고자에게 알림으로 안내됩니다.</li>
+<li>명백한 위반이 확인되면 사전 통보 없이 게시물이 삭제될 수 있습니다.</li>
+<li>허위 신고를 반복하면 이용이 제한될 수 있습니다.</li>
+</ul>
+
+<h3>제7조 (이용 제한)</h3>
+<p>위반 정도에 따라 다음과 같이 조치합니다.</p>
+<ul>
+<li><b>경미</b> — 게시물 삭제 및 안내</li>
+<li><b>반복·중대</b> — 3일 / 7일 / 30일 이용 정지</li>
+<li><b>심각</b> — 영구 이용 정지</li>
+</ul>
+<p>정지 기간에는 글·댓글·쪽지를 쓸 수 없으며, 읽기는 가능합니다. 정지 사유는 본인에게 안내됩니다.</p>
+
+<h3>제8조 (탈퇴)</h3>
+<ul>
+<li>언제든 탈퇴할 수 있습니다.</li>
+<li>탈퇴 시 계정 정보는 삭제되지만, <b>이미 올린 글과 댓글은 남으며 작성자는 "알 수 없음"으로 표시</b>됩니다. 다른 회원들의 대화 흐름을 지키기 위함입니다.</li>
+<li>글까지 지우고 싶다면 탈퇴 전에 직접 삭제해주세요.</li>
+</ul>
+
+<h3>제9조 (면책)</h3>
+<ul>
+<li>회원이 올린 게시물의 내용에 대한 책임은 작성자 본인에게 있습니다.</li>
+<li>회원 간 거래나 분쟁에 서비스는 개입하지 않습니다.</li>
+<li>서비스는 개인이 취미로 운영하며, 사정에 따라 종료될 수 있습니다. 종료 시 미리 공지합니다.</li>
+</ul>
+
+<h3>제10조 (약관 변경)</h3>
+<p>약관이 바뀌면 공지사항과 알림으로 안내합니다. 변경 후에도 계속 이용하시면 동의한 것으로 봅니다.</p>
+
+<div class="doc-date">시행일: ${DOC_DATE}</div>
+`;
+
+const DOC_PRIVACY = `
+<h3>1. 수집하는 정보</h3>
+<p><b>가입할 때</b></p>
+<ul>
+<li>이메일 주소 — 로그인, 비밀번호 찾기에 사용</li>
+<li>비밀번호 — 암호화되어 저장되며 운영자도 볼 수 없습니다</li>
+<li>닉네임</li>
+</ul>
+<p><b>이용하면서 쌓이는 것</b></p>
+<ul>
+<li>올린 글·댓글·사진·동영상</li>
+<li>주고받은 쪽지</li>
+<li>프로필 사진, 소개글</li>
+<li>팔로우 관계, 좋아요·북마크 기록</li>
+<li>알림 수신 정보(알림을 켠 경우)</li>
+</ul>
+
+<h3>2. 사용 목적</h3>
+<ul>
+<li>회원 확인 및 로그인</li>
+<li>글·댓글·쪽지 등 서비스 제공</li>
+<li>알림 발송</li>
+<li>신고 처리 및 이용 제한</li>
+</ul>
+
+<h3>3. 사진에 담긴 정보</h3>
+<ul>
+<li>사진을 올릴 때 <b>촬영 위치·기기 정보(EXIF)가 자동으로 제거</b>됩니다.</li>
+<li>다만 글쓰기에서 <b>「원본 화질로 올리기」를 체크하면 제거되지 않습니다.</b> 위치정보가 함께 올라갈 수 있으니 주의해주세요.</li>
+<li>동영상은 기술적 한계로 정보가 제거되지 않습니다.</li>
+</ul>
+
+<h3>4. 보관 기간</h3>
+<ul>
+<li>회원 정보는 탈퇴할 때까지 보관합니다.</li>
+<li>탈퇴하면 계정 정보는 삭제되며, 게시물은 작성자 표시 없이 남습니다.</li>
+<li>쪽지는 대화 상대가 남아 있는 동안 보관됩니다.</li>
+</ul>
+
+<h3>5. 제3자 제공</h3>
+<p>회원의 정보를 다른 곳에 팔거나 넘기지 않습니다. 다만 서비스 운영을 위해 아래 업체의 시스템을 이용합니다.</p>
+<ul>
+<li><b>Supabase</b> — 회원 정보·게시물·사진 저장 (데이터는 한국 리전에 보관)</li>
+<li><b>Vercel</b> — 웹사이트 제공</li>
+</ul>
+
+<h3>6. 회원의 권리</h3>
+<ul>
+<li>프로필 수정에서 닉네임·사진·소개를 언제든 바꿀 수 있습니다.</li>
+<li>내가 올린 글과 댓글은 직접 삭제할 수 있습니다.</li>
+<li>탈퇴를 원하시면 운영자에게 알려주세요.</li>
+<li>내 정보를 어떻게 쓰고 있는지 궁금하면 문의해주세요.</li>
+</ul>
+
+<h3>7. 보안</h3>
+<ul>
+<li>비밀번호는 암호화되어 저장됩니다.</li>
+<li>쪽지는 대화 당사자 외에는 열람할 수 없도록 데이터베이스 차원에서 차단되어 있습니다.</li>
+<li>다만 인터넷 서비스 특성상 완벽한 보안은 보장할 수 없습니다. 중요한 개인정보는 올리지 말아주세요.</li>
+</ul>
+
+<h3>8. 만 14세 미만</h3>
+<p>만 14세 미만은 가입할 수 없습니다. 확인되면 계정이 삭제될 수 있습니다.</p>
+
+<h3>9. 문의</h3>
+<p>개인정보에 관한 문의는 운영자(Host 계정)에게 쪽지로 보내주세요.</p>
+
+<div class="doc-date">시행일: ${DOC_DATE}</div>
+`;
+
+function openDoc(kind){
+  $('docTitle').textContent = kind === 'privacy' ? '개인정보 처리방침' : '이용약관';
+  $('docBody').innerHTML = kind === 'privacy' ? DOC_PRIVACY : DOC_TERMS;
+  $('docBody').scrollTop = 0;
+  $('docSheet').classList.add('on');
+}
+
+document.querySelectorAll('.view[data-doc]').forEach(v => {
+  v.addEventListener('click', e => {
+    e.stopPropagation();
+    openDoc(v.dataset.doc);
+  });
+});
+
+$('docClose').addEventListener('click', () => $('docSheet').classList.remove('on'));
+$('docSheet').addEventListener('click', e => {
+  if(e.target === $('docSheet')) $('docSheet').classList.remove('on');
+});
+$('docTerms').addEventListener('click', () => openDoc('terms'));
+$('edTerms').addEventListener('click', () => openDoc('terms'));
+$('edPrivacy').addEventListener('click', () => openDoc('privacy'));
+$('docPrivacy').addEventListener('click', () => openDoc('privacy'));
 
 /* ================= 내 신고 내역 ================= */
 const ST_LABEL = {
