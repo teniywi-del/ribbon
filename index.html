@@ -840,6 +840,26 @@
   /* 프로필 수정 모달 */
   #docSheet{ z-index:180; }
   #quitSheet{ z-index:190; }
+  #blockSheet{ z-index:185; }
+
+  .blk-row{
+    display:flex; align-items:center; gap:11px;
+    padding:12px 0; border-bottom:1px dashed var(--line);
+  }
+  .blk-row:last-child{ border-bottom:none; }
+  .blk-main{ flex:1; min-width:0; }
+  .blk-btn{
+    font-family:inherit; font-size:11.5px; font-weight:700;
+    color:var(--sub); background:var(--card);
+    border:1.5px solid var(--line);
+    padding:7px 14px; border-radius:999px;
+    cursor:pointer; flex-shrink:0;
+  }
+  .blocked-note{
+    text-align:center; padding:40px 20px;
+    color:var(--sub); font-size:12.5px; line-height:1.9;
+  }
+  .blocked-note .e{ font-size:32px; display:block; margin-bottom:12px; opacity:.6; }
 
   .quit-link{
     display:block; margin:16px auto 0;
@@ -1984,6 +2004,20 @@
     </div>
   </div>
 
+  <!-- 차단 목록 -->
+  <div class="sheet" id="blockSheet">
+    <div class="sheet-box">
+      <div class="fl-head">
+        <div class="sheet-t">차단 목록</div>
+        <button class="fl-close" id="blkClose">✕</button>
+      </div>
+      <p style="font-size:11.5px;color:var(--sub);line-height:1.7;margin-bottom:14px">
+        차단한 사람의 글·댓글은 서로 보이지 않고, 쪽지도 주고받을 수 없어요.
+      </p>
+      <div class="fl-list" id="blkList"></div>
+    </div>
+  </div>
+
   <!-- 회원 탈퇴 -->
   <div class="sheet" id="quitSheet">
     <div class="sheet-box">
@@ -2141,6 +2175,8 @@
         <button class="sheet-cancel" id="edCancel">취소</button>
         <button class="sheet-save" id="edSave">저장</button>
       </div>
+
+      <button class="pf-btn" id="edBlocks" style="margin-top:6px; width:100%">차단 목록</button>
 
       <div class="doc-links" style="margin-top:14px">
         <button data-doc="terms">이용약관</button>
@@ -2464,6 +2500,7 @@ async function enter(){
 
   await loadLiked();
   await loadFollowing();
+  await loadBlocks();
   showBanBanner();
   showPushTip();
   screen('home');
@@ -2599,7 +2636,7 @@ async function loadFeed(){
   }
 
   feed.innerHTML = '';
-  data.forEach(p => feed.appendChild(postCard(p)));
+  data.filter(p => !isBlockedUser(p.author_id)).forEach(p => feed.appendChild(postCard(p)));
   if(data.length < PAGE) markFeedEnd();
 }
 
@@ -2626,7 +2663,7 @@ async function loadMoreFeed(){
 
   if(!data || !data.length){ markFeedEnd(); return; }
 
-  data.forEach(p => feed.appendChild(postCard(p)));
+  data.filter(p => !isBlockedUser(p.author_id)).forEach(p => feed.appendChild(postCard(p)));
   if(data.length < PAGE) markFeedEnd();
 }
 
@@ -3091,6 +3128,20 @@ async function openDetail(postId){
 
   if(error){ $('dBody').innerHTML = '<div class="loading">' + esc(ko(error.message)) + '</div>'; return; }
 
+  if(isBlockedUser(p.author_id)){
+    $('dBody').innerHTML = `
+      <div class="blocked-note">
+        <span class="e">🚫</span>
+        차단한 사람의 글이에요.<br>
+        차단을 해제하면 다시 볼 수 있어요.
+      </div>`;
+    $('comments').innerHTML = '';
+    $('dDelete').style.display = 'none';
+    $('dReport').style.display = 'none';
+    $('dMove').style.display = 'none';
+    return;
+  }
+
   curPost = p;
   curMedia = [...(p.post_media || [])].sort((a,b) => a.sort_order - b.sort_order);
   const isInfo = p.boards?.zone === 'info';
@@ -3256,7 +3307,7 @@ async function loadComments(postId){
 
   if(error){ box.innerHTML = '<div class="c-empty">' + esc(ko(error.message)) + '</div>'; return; }
 
-  const list = data || [];
+  const list = (data || []).filter(c => !isBlockedUser(c.author_id));
   $('cCount').textContent = list.length;
 
   if(!list.length){
@@ -3524,15 +3575,30 @@ async function openProfile(userId){
     btns.innerHTML =
       `<button class="pf-btn${isFol ? '' : ' fill'}" id="pfFollow">${isFol ? '팔로잉' : '팔로우'}</button>` +
       '<button class="pf-btn" id="pfSoon">메시지</button>';
+    btns.innerHTML += '<button class="pf-btn" id="pfBlock" style="flex:0 0 46px">🚫</button>';
     btns.innerHTML += '<button class="pf-btn" id="pfReport" style="flex:0 0 46px">🚨</button>';
     $('pfFollow').addEventListener('click', () => toggleFollow(u.id, $('pfFollow')));
     $('pfSoon').addEventListener('click', () => startChat(u));
     $('pfReport').addEventListener('click', () =>
       openReport({ type:'user', userId: u.id, label: u.nickname + '님 신고하기' }));
+    $('pfBlock').addEventListener('click', async () => {
+      const done = await toggleBlock(u);
+      if(done) openProfile(u.id);
+    });
   }
 
   loadProfileStats(u.id);
-  loadProfileTab();
+
+  if(!mine && isBlockedUser(u.id)){
+    $('pfContent').innerHTML = `
+      <div class="blocked-note">
+        <span class="e">🚫</span>
+        차단한 사람이에요.<br>
+        서로의 글과 댓글이 보이지 않아요.
+      </div>`;
+  } else {
+    loadProfileTab();
+  }
   $('pfScroll').scrollTop = 0;
 }
 
@@ -3856,7 +3922,7 @@ const DOC_TERMS = `
 <ul>
 <li>신고가 접수되면 운영자가 확인 후 조치합니다. 처리 결과는 신고자에게 알림으로 안내됩니다.</li>
 <li>명백한 위반이 확인되면 사전 통보 없이 게시물이 삭제될 수 있습니다.</li>
-<li>허위 신고를 반복하면 이용이 제한될 수 있습니다.</li>
+<li>허위 신고를 반복하면 이용이 제한될 수 있습니다.</li>\n<li>특정 회원이 불편하다면 프로필의 <b>차단</b> 기능을 이용해주세요. 서로의 글과 쪽지가 보이지 않게 됩니다.</li>
 </ul>
 
 <h3>제7조 (이용 제한)</h3>
@@ -3978,6 +4044,100 @@ document.addEventListener('click', e => {
     $('docSheet').classList.remove('on');
   }
 });
+
+/* ================= 차단 ================= */
+let blockedSet = new Set();   // 내가 차단 + 나를 차단한 사람 전부
+
+async function loadBlocks(){
+  if(!me) return;
+  const { data } = await db.from('blocks')
+    .select('blocker_id, blocked_id')
+    .or(`blocker_id.eq.${me.id},blocked_id.eq.${me.id}`);
+
+  blockedSet = new Set();
+  (data || []).forEach(b => {
+    blockedSet.add(b.blocker_id === me.id ? b.blocked_id : b.blocker_id);
+  });
+}
+
+function isBlockedUser(id){
+  return id && blockedSet.has(id);
+}
+
+async function toggleBlock(user){
+  if(!me || user.id === me.id) return;
+
+  const already = await db.from('blocks')
+    .select('blocker_id').eq('blocker_id', me.id).eq('blocked_id', user.id).maybeSingle();
+
+  if(already.data){
+    const { error } = await db.from('blocks')
+      .delete().eq('blocker_id', me.id).eq('blocked_id', user.id);
+    if(error) return toast(ko(error.message), 'bad');
+    blockedSet.delete(user.id);
+    toast(user.nickname + '님 차단을 해제했어요');
+  } else {
+    if(!confirm(`${user.nickname}님을 차단할까요?\n\n· 서로의 글과 댓글이 보이지 않아요\n· 쪽지를 주고받을 수 없어요\n· 서로 팔로우가 해제돼요`)) return;
+    const { error } = await db.from('blocks')
+      .insert({ blocker_id: me.id, blocked_id: user.id });
+    if(error) return toast(ko(error.message), 'bad');
+    blockedSet.add(user.id);
+    followingSet.delete(user.id);
+    toast(user.nickname + '님을 차단했어요');
+  }
+  return true;
+}
+
+/* 차단 목록 */
+$('edBlocks').addEventListener('click', openBlockList);
+$('blkClose').addEventListener('click', () => $('blockSheet').classList.remove('on'));
+$('blockSheet').addEventListener('click', e => {
+  if(e.target === $('blockSheet')) $('blockSheet').classList.remove('on');
+});
+
+async function openBlockList(){
+  const box = $('blkList');
+  box.innerHTML = '<div class="loading">불러오는 중...</div>';
+  $('editSheet').classList.remove('on');
+  $('blockSheet').classList.add('on');
+
+  const { data, error } = await db.from('blocks')
+    .select('blocked_id, created_at, u:profiles!blocks_blocked_id_fkey(id, nickname, handle, avatar_emoji, avatar_url, role, supporter)')
+    .eq('blocker_id', me.id)
+    .order('created_at', { ascending:false });
+
+  if(error){ box.innerHTML = '<div class="c-empty">' + esc(ko(error.message)) + '</div>'; return; }
+
+  const list = (data || []).map(r => r.u).filter(Boolean);
+  if(!list.length){
+    box.innerHTML = '<div class="c-empty" style="background:none">차단한 사람이 없어요 🎀</div>';
+    return;
+  }
+
+  box.innerHTML = '';
+  list.forEach(u => {
+    const row = document.createElement('div');
+    row.className = 'blk-row';
+    row.innerHTML = `
+      <div class="avatar">${avatarInner(u)}</div>
+      <div class="blk-main">
+        <div class="fl-name">${esc(u.nickname)}</div>
+        <div class="fl-bio">@${esc(u.handle)}</div>
+      </div>
+      <button class="blk-btn">차단 해제</button>`;
+
+    row.querySelector('.blk-btn').addEventListener('click', async () => {
+      const { error } = await db.from('blocks')
+        .delete().eq('blocker_id', me.id).eq('blocked_id', u.id);
+      if(error) return toast(ko(error.message), 'bad');
+      blockedSet.delete(u.id);
+      toast(u.nickname + '님 차단을 해제했어요');
+      openBlockList();
+    });
+
+    box.appendChild(row);
+  });
+}
 
 /* ================= 회원 탈퇴 ================= */
 $('edQuit').addEventListener('click', () => {
@@ -4602,7 +4762,7 @@ async function openFollowList(kind){
 
   if(error){ box.innerHTML = '<div class="c-empty">' + esc(ko(error.message)) + '</div>'; return; }
 
-  const list = (data || []).map(r => r.u).filter(Boolean);
+  const list = (data || []).map(r => r.u).filter(u => u && !isBlockedUser(u.id));
 
   if(!list.length){
     box.innerHTML = `<div class="c-empty" style="background:none">${
@@ -4817,7 +4977,7 @@ async function loadBrowse(){
 
   const [popRes, userRes] = await Promise.all([
     db.from('posts')
-      .select('id, title, like_count, comment_count, boards(label, zone), post_media(url, kind, sort_order)')
+      .select('id, title, author_id, like_count, comment_count, boards(label, zone), post_media(url, kind, sort_order)')
       .order('like_count', { ascending:false })
       .order('comment_count', { ascending:false })
       .limit(5),
@@ -4827,8 +4987,10 @@ async function loadBrowse(){
       .limit(20)
   ]);
 
-  const pop = popRes.data || [];
-  const users = (userRes.data || []).filter(u => u.id !== me.id && !followingSet.has(u.id)).slice(0, 10);
+  const pop = (popRes.data || []).filter(p => !isBlockedUser(p.author_id));
+  const users = (userRes.data || [])
+    .filter(u => u.id !== me.id && !followingSet.has(u.id) && !isBlockedUser(u.id))
+    .slice(0, 10);
 
   let html = '';
 
@@ -4941,8 +5103,8 @@ async function runSearch(q){
       .limit(20)
   ]);
 
-  const users = uRes.data || [];
-  const posts = pRes.data || [];
+  const users = (uRes.data || []).filter(u => !isBlockedUser(u.id));
+  const posts = (pRes.data || []).filter(p => !isBlockedUser(p.author_id));
 
   if(!users.length && !posts.length){
     box.innerHTML = `
@@ -5169,7 +5331,10 @@ async function openDM(){
   }
 
   box.innerHTML = '';
-  data.forEach((c, i) => {
+  data.filter(c => {
+    const o = c.user_a === me.id ? c.b : c.a;
+    return !isBlockedUser(o?.id);
+  }).forEach((c, i) => {
     const other = c.user_a === me.id ? c.b : c.a;
     const unread = unreadMap[c.id] || 0;
     const row = document.createElement('div');
